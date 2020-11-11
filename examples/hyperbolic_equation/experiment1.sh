@@ -1,0 +1,2 @@
+CUDA_VISIBLE_DEVICES=1 nohup python buckley_dgm.py --activation_fn=selu > log_experiments1.log </dev/null 2>&1 &&
+CUDA_VISIBLE_DEVICES=1 nohup python buckley_dgm.py --activation_fn=poly > log_experiments1.log </dev/null 2>&1 &
