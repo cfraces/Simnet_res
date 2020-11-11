@@ -34,14 +34,14 @@ class BuckleyTrain(TrainDomain):
     # initial conditions
     IC = geo.interior_bc(outvar_sympy={'u': 0},
                          bounds={x: (L1, L2)},
-                         batch_size_per_area=5000,
+                         batch_size_per_area=2000,
                          lambda_sympy={'lambda_u': 1.0},
                          param_ranges={t_symbol: 0.0})
     self.add(IC, name="IC")
 
     # boundary conditions
     BC = geo.boundary_bc(outvar_sympy={'u': 0.5898},
-                         batch_size_per_area=1000,
+                         batch_size_per_area=2000,
                          lambda_sympy={'lambda_u': 1.0},
                          param_ranges=time_range,
                          criteria=x <= 0)
@@ -50,7 +50,7 @@ class BuckleyTrain(TrainDomain):
     # interior
     interior = geo.interior_bc(outvar_sympy={'buckley_gravity': 0},
                                bounds={x: (L1, L2)},
-                               batch_size_per_area=5000,
+                               batch_size_per_area=10000,
                                lambda_sympy={'lambda_buckley_gravity': 1.0},
                                param_ranges=time_range)
     self.add(interior, name="Interior")
@@ -83,10 +83,10 @@ class BuckleySolver(Solver):
   def __init__(self, **config):
     super(BuckleySolver, self).__init__(**config)
 
-    self.equations = BuckleyGravity(u='u', c=2, dim=1, time=True).make_node()
+    # self.equations = BuckleyGravity(u='u', c=2, dim=1, time=True).make_node()
 
-    # self.equations = (BuckleyGravityWeighted(u='u', c=2, dim=1, time=True).make_node(stop_gradients=['grad_magnitude_u'])
-    #                   + GradMag('u').make_node())
+    self.equations = (BuckleyGravityWeighted(u='u', c=2, dim=1, time=True).make_node(stop_gradients=['grad_magnitude_u'])
+                      + GradMag('u').make_node())
     buckley_net = self.arch.make_node(name='buckley_net',
                                       inputs=['x', 't'],
                                       outputs=['u'])
@@ -95,9 +95,11 @@ class BuckleySolver(Solver):
   @classmethod  # Explain This
   def update_defaults(cls, defaults):
     defaults.update({
-      'network_dir': './checkpoint_gravity/buckley{}'.format(int(time.time())),
+      'network_dir': './checkpoint_gravity/buckley_w{}'.format(int(time.time())),
       'max_steps': 30000,
       'decay_steps': 300,
+      'start_lr': 1e-3,
+      'rec_results_cpu': True,
       'amp': True,
       'xla': True
     })
