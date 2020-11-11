@@ -14,7 +14,7 @@ import scipy.io as sio
 import time
 
 # params for domain
-L1 = float(0)
+L1 = float(-0.55)
 L2 = float(2.45)
 
 # define geometry
@@ -44,7 +44,7 @@ class BuckleyTrain(TrainDomain):
                          batch_size_per_area=2000,
                          lambda_sympy={'lambda_u': 1.0},
                          param_ranges=time_range,
-                         criteria=x <= 0)
+                         criteria=Eq(x, 0))
     self.add(BC, name="BC")
 
     # interior
