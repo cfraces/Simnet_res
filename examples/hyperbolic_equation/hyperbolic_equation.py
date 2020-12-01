@@ -80,8 +80,8 @@ class BuckleyEquation(PDES):
     # True f
     f = (u - c) * (u - c) / ((u - c) ** 2 + (1 - u) * (1 - u) / 2)
 
-    self.equations['buckley_equation'] = (u.diff(t) - eps * u.diff(x, 2)
-                                          + f.diff(x).replace(DiracDelta, lambda x: 0)
+    self.equations['buckley_equation'] = (u.diff(t)
+                                          + f.diff(x)
                                           + (c * u).diff(y)
                                           + (c * u).diff(z))
 

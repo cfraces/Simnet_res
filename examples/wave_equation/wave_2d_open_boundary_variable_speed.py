@@ -33,8 +33,8 @@ wave_speed_invar = {}
 wave_speed_invar['x'] = np.expand_dims(mesh_x.flatten(), axis=-1)
 wave_speed_invar['y'] = np.expand_dims(mesh_y.flatten(), axis=-1)
 wave_speed_outvar = {}
-wave_speed_outvar['c'] = np.tanh(
-    80 * (wave_speed_invar['x'] - 0.25)) / 4 + 0.75  # wave speed changes from 2 to 1 on 0.25 line.
+wave_speed_outvar['c'] = np.tanh(80*(wave_speed_invar['x']-0.25))/4 + np.tanh(80*(wave_speed_invar['x']-0.5))/4 \
+                         + np.tanh(80*(wave_speed_invar['x']-0.75))/4 + 0.75
 
 
 # Define wave equation, we will not use SimNet version
@@ -174,7 +174,7 @@ class WaveTrain(TrainDomain):
         self.add(wave_speed, "WaveSpeed")
 
         # initial conditions
-        initial_conditions = geo.interior_bc(outvar_sympy={'z': exp(-200 * ((x - 0.75) ** 2 + (y - 0.5) ** 2)),
+        initial_conditions = geo.interior_bc(outvar_sympy={'z': exp(-200 * ((x - 0.9) ** 2 + (y - 0.5) ** 2)),
                                                            'z__t': 0},
                                              batch_size_per_area=2048 // 2,
                                              lambda_sympy={'lambda_z': 100.0,

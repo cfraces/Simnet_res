@@ -9,7 +9,7 @@ from simnet.data import Validation, BC, Inference
 from simnet.sympy_utils.geometry_2d import Rectangle, Circle
 from simnet.sympy_utils.geometry_1d import Line1D
 from simnet.pdes import PDES
-from reservoir_equation import GravityEquation, OpenBoundary
+from reservoir_equation import GravityEquation, ClosedBoundary, GravityEquationWeighted, GradMag, OpenBoundary
 from simnet.controller import SimNetController
 
 # params for domain
@@ -34,11 +34,13 @@ time_range = {t_symbol: (0, time_length)}
 permeability_invar = {}
 mesh_x = np.linspace(L1, L2, 512)
 permeability_invar['x'] = np.expand_dims(mesh_x.flatten(), axis=-1)
-# wave_speed_invar['y'] = np.expand_dims(mesh_y.flatten(), axis=-1)
+# permeability_invar['y'] = np.expand_dims(mesh_y.flatten(), axis=-1)
 permeability_outvar = {}
-permeability_outvar['c'] = 100 * (np.tanh(80 * permeability_invar['x']) -
-                                  np.tanh(
-                                    80 * (permeability_invar['x'] - 1)) - 1)  # perm changes from 100 to 0 on 0.0 line.
+permeability_outvar['c'] = 1 * (np.tanh(80 * permeability_invar['x']) -
+                                np.tanh(
+                                  80 * (permeability_invar['x'] - 1)) - 1)  # perm changes from 100 to 0 on 0.0 line.
+permeability_outvar['c'][permeability_invar['x'] <= 0.05] = 0
+permeability_outvar['c'][permeability_invar['x'] >= 0.95] = 0
 
 
 class GravityTrain(TrainDomain):
@@ -51,34 +53,26 @@ class GravityTrain(TrainDomain):
     permeability = BC.from_numpy(permeability_invar, permeability_outvar, batch_size=2048 // 2)
     self.add(permeability, "Permeability")
 
-    # initial conditions
+    # initial conditions -tanh(80*(x-0.5))/2+0.5
     IC = geo.interior_bc(outvar_sympy={'z': 0.5},
                          bounds={x: (L1, L2)},
-                         batch_size_per_area=2000,
+                         batch_size_per_area=1000,
                          lambda_sympy={'lambda_z': 1.0},
                          param_ranges={t_symbol: 0.0})
     self.add(IC, name="IC")
 
     # boundary conditions
-    # edges = geo.boundary_bc(outvar_sympy={'open_boundary': 0},
-    #                         batch_size_per_area=2048 // 2,
-    #                         lambda_sympy={'lambda_open_boundary': 1.0 * time_length},
-    #                         param_ranges=time_range,
-    #                         criteria=(x <= 0) | (x >= 1))
-    # self.add(edges, name="Edges")
-
-    # boundary conditions
-    # BC = geo.boundary_bc(outvar_sympy={'u': 1},
-    #                      batch_size_per_area=2000,
-    #                      lambda_sympy={'lambda_u': 1.0},
-    #                      param_ranges=time_range,
-    #                      criteria=x <= 0)
-    # self.add(BC, name="BC")
+    edges = geo.boundary_bc(outvar_sympy={'open_boundary': 0},
+                            batch_size_per_area=300,
+                            lambda_sympy={'lambda_open_boundary': 1.0 * time_length},
+                            param_ranges=time_range,
+                            criteria=(x <= 0) | (x >= 1))
+    self.add(edges, name="Edges")
 
     # interior
     interior = geo.interior_bc(outvar_sympy={'gravity_equation': 0},
                                bounds={x: (L1, L2)},
-                               batch_size_per_area=1000,
+                               batch_size_per_area=5000,
                                lambda_sympy={'lambda_gravity_equation': 1.0},
                                param_ranges=time_range)
     self.add(interior, name="Interior")
@@ -123,14 +117,14 @@ class GravitySolver(Solver):
   def __init__(self, **config):
     super(GravitySolver, self).__init__(**config)
 
-    # self.equations = GravityEquation(u='u', c=2, dim=1, time=True).make_node()
-
-    self.equations = (GravityEquation(u='z', c='c', dim=1, time=True).make_node(stop_gradients=['c']))
-
+    # self.equations = (GravityEquation(u='z', c='c', dim=1, time=True).make_node(stop_gradients=['c'])
     #                   + OpenBoundary(u='z', c='c', dim=1, time=True).make_node())
+    self.equations = (
+      GravityEquationWeighted(u='z', c=1, dim=1, time=True).make_node(stop_gradients=['grad_magnitude_z'])
+      + GradMag('z').make_node()
+      + OpenBoundary(u='z', c='c', dim=1, time=True).make_node(stop_gradients=['c']))
 
-    # self.equations = (GravityEquation(u='u', c=100, dim=1, time=True).make_node(stop_gradients=['grad_magnitude_u'])
-    #                   + GradMag('u').make_node())
+    # self.equations = (GravityEquation(u='z', c='c', dim=1, time=True).make_node(stop_gradients=['c']))
 
     gravity_net = self.arch.make_node(name='gravity_net',
                                       inputs=['x', 't'],
@@ -145,8 +139,8 @@ class GravitySolver(Solver):
   def update_defaults(cls, defaults):
     defaults.update({
       'network_dir': './checkpoint_gravity/simple_{}'.format(int(time.time())),
-      'max_steps': 30000,
-      'decay_steps': 300,
+      'max_steps': 70000,
+      'decay_steps': 500,
       'start_lr': 1e-3,
       'rec_results_cpu': True,
       'amp': True,
