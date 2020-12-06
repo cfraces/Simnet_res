@@ -33,10 +33,11 @@ wave_speed_invar = {}
 wave_speed_invar['x'] = np.expand_dims(mesh_x.flatten(), axis=-1)
 wave_speed_invar['y'] = np.expand_dims(mesh_y.flatten(), axis=-1)
 wave_speed_outvar = {}
-wave_speed_outvar['c'] = 1.5 - (
-    np.tanh(80 * (wave_speed_invar['x'] - 0.25)) / 4 + np.tanh(80 * (wave_speed_invar['x'] - 0.5)) / 4 \
-    + np.tanh(80 * (wave_speed_invar['x'] - 0.75)) / 4 + 0.75)
+wave_speed_outvar['c'] = np.ones_like(wave_speed_invar['x'])
 
+# 1.5 - (
+#     np.tanh(80 * (wave_speed_invar['x'] - 0.25)) / 4 + np.tanh(80 * (wave_speed_invar['x'] - 0.5)) / 4 \
+#     + np.tanh(80 * (wave_speed_invar['x'] - 0.75)) / 4 + 0.75)
 # np.tanh(80*((wave_speed_invar['x']+wave_speed_invar['y'])/2-0.5))/4 + 0.75
 # np.tanh(80*((wave_speed_invar['x']+wave_speed_invar['y'])/2-0.25))/4 + \
 #                        np.tanh(80*((wave_speed_invar['x']+wave_speed_invar['y'])/2-0.5))/4 + \
@@ -49,7 +50,7 @@ wave_speed_outvar['c'] = 1.5 - (
 #   80 * (wave_speed_invar['x'] - 1)) - 1)  # perm changes from 100 to 0 on 0.0 line.
 wave_speed_outvar['c'][wave_speed_invar['x'] <= 0.05] = 0
 wave_speed_outvar['c'][wave_speed_invar['y'] <= 0.02] = 0
-wave_speed_outvar['c'][wave_speed_invar['x'] >= 0.9] = 0.001
+# wave_speed_outvar['c'][wave_speed_invar['x'] >= 0.9] = 0.001
 wave_speed_outvar['c'][wave_speed_invar['x'] >= 0.95] = 0
 wave_speed_outvar['c'][wave_speed_invar['y'] >= 0.98] = 0
 
@@ -258,7 +259,7 @@ class WaveTrain(TrainDomain):
     self.add(wave_speed, "WaveSpeed")
 
     # initial conditions exp(-200 * ((x - 0.5) ** 2 + (y - 0.5) ** 2))
-    initial_conditions = geo.interior_bc(outvar_sympy={'z': -tanh(5*(x - 0.5))/2 + 0.5,
+    initial_conditions = geo.interior_bc(outvar_sympy={'z': exp(-200 * ((x - 0.9) ** 2 + (y - 0.5) ** 2)),
                                                        'z__t': 0},
                                          batch_size_per_area=2048 // 2,
                                          lambda_sympy={'lambda_z': 100.0,
@@ -307,7 +308,7 @@ class WaveSolver(Solver):
 
     # self.arch.set_frequencies(('full', [i/2 for i in range(0, 10)]))
 
-    self.equations = (WaveEquation(u='z', c='c', dim=2, time=True).make_node(stop_gradients=['c'])
+    self.equations = (WaveEquation(u='z', c='c', dim=2, time=True).make_node(stop_gradients=['c__x', 'c__y'])
                       + OpenBoundary(u='z', c='c', dim=2, time=True).make_node())
 
     wave_net = self.arch.make_node(name='wave_net',
@@ -324,8 +325,8 @@ class WaveSolver(Solver):
       'network_dir': './checkpoint_2d/simple_{}'.format(int(time.time())),
       'max_steps': 400000,
       'decay_steps': 4000,
-      'start_lr': 1e-3,
-      'layer_size': 128,
+      'start_lr': 3e-4,
+      'layer_size': 256,
     })
 
 
