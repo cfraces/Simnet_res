@@ -48,11 +48,11 @@ wave_speed_outvar['c'] = np.ones_like(wave_speed_invar['x'])
 # -
 # np.tanh(
 #   80 * (wave_speed_invar['x'] - 1)) - 1)  # perm changes from 100 to 0 on 0.0 line.
-wave_speed_outvar['c'][wave_speed_invar['x'] <= 0.05] = 0
-wave_speed_outvar['c'][wave_speed_invar['y'] <= 0.02] = 0
+wave_speed_outvar['c'][wave_speed_invar['x'] <= 0.05] = 0.0
+wave_speed_outvar['c'][wave_speed_invar['y'] <= 0.02] = 0.0
 # wave_speed_outvar['c'][wave_speed_invar['x'] >= 0.9] = 0.001
-wave_speed_outvar['c'][wave_speed_invar['x'] >= 0.95] = 0
-wave_speed_outvar['c'][wave_speed_invar['y'] >= 0.98] = 0
+wave_speed_outvar['c'][wave_speed_invar['x'] >= 0.95] = 0.0
+wave_speed_outvar['c'][wave_speed_invar['y'] >= 0.98] = 0.0
 
 
 # Define wave equation, we will not use SimNet version
@@ -259,7 +259,7 @@ class WaveTrain(TrainDomain):
     self.add(wave_speed, "WaveSpeed")
 
     # initial conditions exp(-200 * ((x - 0.5) ** 2 + (y - 0.5) ** 2))
-    initial_conditions = geo.interior_bc(outvar_sympy={'z': exp(-200 * ((x - 0.9) ** 2 + (y - 0.5) ** 2)),
+    initial_conditions = geo.interior_bc(outvar_sympy={'z': exp(-200 * ((x - 0.5) ** 2 + (y - 0.5) ** 2)),
                                                        'z__t': 0},
                                          batch_size_per_area=2048 // 2,
                                          lambda_sympy={'lambda_z': 100.0,
@@ -308,8 +308,8 @@ class WaveSolver(Solver):
 
     # self.arch.set_frequencies(('full', [i/2 for i in range(0, 10)]))
 
-    self.equations = (WaveEquation(u='z', c='c', dim=2, time=True).make_node(stop_gradients=['c__x', 'c__y'])
-                      + OpenBoundary(u='z', c='c', dim=2, time=True).make_node())
+    self.equations = (WaveEquation(u='z', c='c', dim=2, time=True).make_node(stop_gradients=['c', 'c__x', 'c__y'])
+                      + OpenBoundary(u='z', c='c', dim=2, time=True).make_node(stop_gradients=['c', 'c__x', 'c__y']))
 
     wave_net = self.arch.make_node(name='wave_net',
                                    inputs=['x', 'y', 't'],
