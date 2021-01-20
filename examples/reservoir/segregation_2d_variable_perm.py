@@ -258,8 +258,8 @@ class WaveTrain(TrainDomain):
     wave_speed = BC.from_numpy(wave_speed_invar, wave_speed_outvar, batch_size=2048 // 2)
     self.add(wave_speed, "WaveSpeed")
 
-    # initial conditions exp(-200 * ((x - 0.5) ** 2 + (y - 0.5) ** 2))
-    initial_conditions = geo.interior_bc(outvar_sympy={'z': exp(-200 * ((x - 0.9) ** 2 + (y - 0.5) ** 2)),
+    # initial conditions exp(-200 * ((x - 0.9) ** 2 + (y - 0.5) ** 2))
+    initial_conditions = geo.interior_bc(outvar_sympy={'z': 0.5,
                                                        'z__t': 0},
                                          batch_size_per_area=2048 // 2,
                                          lambda_sympy={'lambda_z': 100.0,
@@ -308,8 +308,8 @@ class WaveSolver(Solver):
 
     # self.arch.set_frequencies(('full', [i/2 for i in range(0, 10)]))
 
-    self.equations = (WaveEquation(u='z', c='c', dim=2, time=True).make_node(stop_gradients=['c', 'c__x', 'c__y'])
-                      + OpenBoundary(u='z', c='c', dim=2, time=True).make_node(stop_gradients=['c', 'c__x', 'c__y']))
+    self.equations = (WaveEquation(u='z', c='c', dim=2, time=True).make_node()
+                      + OpenBoundary(u='z', c='c', dim=2, time=True).make_node())
 
     wave_net = self.arch.make_node(name='wave_net',
                                    inputs=['x', 'y', 't'],
