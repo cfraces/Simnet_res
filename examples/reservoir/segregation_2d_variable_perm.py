@@ -250,7 +250,6 @@ class OpenBoundary(PDES):
                                        + f.diff(y, 1)
                                        - c * u.diff(z, 1))
 
-
 class WaveTrain(TrainDomain):
   def __init__(self, **config):
     super(WaveTrain, self).__init__()
@@ -308,12 +307,13 @@ class WaveSolver(Solver):
 
     # self.arch.set_frequencies(('full', [i/2 for i in range(0, 10)]))
 
-    self.equations = (WaveEquation(u='z', c='c', dim=2, time=True).make_node()
-                      + OpenBoundary(u='z', c='c', dim=2, time=True).make_node())
+    self.equations = (WaveEquation(u='z', c='c', dim=2, time=True).make_node(stop_gradients=['c', 'c__x', 'c__y'])
+                      + OpenBoundary(u='z', c='c', dim=2, time=True).make_node(stop_gradients=['c', 'c__x', 'c__y'])
+                      + [Node.from_sympy((tanh(Symbol('z_star')) + 1.1)/2.2, 'z')])
 
     wave_net = self.arch.make_node(name='wave_net',
                                    inputs=['x', 'y', 't'],
-                                   outputs=['z'])
+                                   outputs=['z_star'])
     speed_net = self.arch.make_node(name='speed_net',
                                     inputs=['x', 'y'],
                                     outputs=['c'])
