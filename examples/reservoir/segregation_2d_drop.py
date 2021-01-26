@@ -255,7 +255,7 @@ class WaveTrain(TrainDomain):
 
     # initial conditions exp(-200 * ((x - 0.8) ** 2 + (y - 0.5) ** 2))
     # (1+tanh(80*(x-0.5)))/2
-    initial_conditions = geo.interior_bc(outvar_sympy={'z': 0.5,
+    initial_conditions = geo.interior_bc(outvar_sympy={'z': exp(-200 * ((x - 0.8) ** 2 + (y - 0.5) ** 2)),
                                                        'z__t': 0},
                                          batch_size_per_area=2048,
                                          lambda_sympy={'lambda_z': 100.0,

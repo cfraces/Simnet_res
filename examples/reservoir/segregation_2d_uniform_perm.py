@@ -33,7 +33,7 @@ wave_speed_invar = {}
 wave_speed_invar['x'] = np.expand_dims(mesh_x.flatten(), axis=-1)
 wave_speed_invar['y'] = np.expand_dims(mesh_y.flatten(), axis=-1)
 wave_speed_outvar = {}
-wave_speed_outvar['c'] = np.ones_like(wave_speed_invar['x'])
+# wave_speed_outvar['c'] = np.ones_like(wave_speed_invar['x'])
 
 # wave_speed_outvar['c'] = 1.5 - (
 #   np.tanh(80 * (wave_speed_invar['x'] - 0.25)) / 4 + np.tanh(80 * (wave_speed_invar['x'] - 0.5)) / 4
@@ -44,9 +44,9 @@ wave_speed_outvar['c'] = np.ones_like(wave_speed_invar['x'])
 #                        np.tanh(80*((wave_speed_invar['x']+wave_speed_invar['y'])/2-0.5))/4 + \
 #                        np.tanh(80*((wave_speed_invar['x']+wave_speed_invar['y'])/2-0.75))/4 + 0.75
 
-# wave_speed_outvar['c'] = 1 * (
-#     np.tanh(80 * (wave_speed_invar['x'] - 0.25)) / 4 + np.tanh(80 * (wave_speed_invar['x'] - 0.5)) / 4
-#     + np.tanh(80 * (wave_speed_invar['x'] - 0.75)) / 4 + 0.75)
+wave_speed_outvar['c'] = 1 * (
+    np.tanh(80 * (wave_speed_invar['x'] - 0.25)) / 4 + np.tanh(80 * (wave_speed_invar['x'] - 0.5)) / 4
+    + np.tanh(80 * (wave_speed_invar['x'] - 0.75)) / 4 + 0.75)
 
 # -
 # np.tanh(
