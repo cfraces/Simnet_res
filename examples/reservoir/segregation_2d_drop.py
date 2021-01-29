@@ -35,25 +35,14 @@ wave_speed_invar['y'] = np.expand_dims(mesh_y.flatten(), axis=-1)
 wave_speed_outvar = {}
 wave_speed_outvar['c'] = np.ones_like(wave_speed_invar['x'])
 
-# wave_speed_outvar['c'] = 1.5 - (
-#   np.tanh(80 * (wave_speed_invar['x'] - 0.25)) / 4 + np.tanh(80 * (wave_speed_invar['x'] - 0.5)) / 4
-#   + np.tanh(80 * (wave_speed_invar['x'] - 0.75)) / 4 + 0.75)
-
-# np.tanh(80*((wave_speed_invar['x']+wave_speed_invar['y'])/2-0.5))/4 + 0.75
-# np.tanh(80*((wave_speed_invar['x']+wave_speed_invar['y'])/2-0.25))/4 + \
-#                        np.tanh(80*((wave_speed_invar['x']+wave_speed_invar['y'])/2-0.5))/4 + \
-#                        np.tanh(80*((wave_speed_invar['x']+wave_speed_invar['y'])/2-0.75))/4 + 0.75
 
 # wave_speed_outvar['c'] = 1 * (
 #     np.tanh(80 * (wave_speed_invar['x'] - 0.25)) / 4 + np.tanh(80 * (wave_speed_invar['x'] - 0.5)) / 4
 #     + np.tanh(80 * (wave_speed_invar['x'] - 0.75)) / 4 + 0.75)
 
-# -
-# np.tanh(
-#   80 * (wave_speed_invar['x'] - 1)) - 1)  # perm changes from 100 to 0 on 0.0 line.
+
 wave_speed_outvar['c'][wave_speed_invar['x'] <= 0.01] = 0.0
 wave_speed_outvar['c'][wave_speed_invar['y'] <= 0.01] = 0.0
-# wave_speed_outvar['c'][wave_speed_invar['x'] >= 0.9] = 0.001
 wave_speed_outvar['c'][wave_speed_invar['x'] >= 0.99] = 0.0
 wave_speed_outvar['c'][wave_speed_invar['y'] >= 0.99] = 0.0
 
@@ -116,9 +105,9 @@ class WaveEquation(PDES):
     nw = 2
     no = 2
     # Residual oil saturation
-    Sor = 0.1
+    Sor = 0.0
     # Residual water saturation
-    Swc = 0.2
+    Swc = 0.0
     # End points
     krwmax = 1
     kromax = 1
@@ -210,9 +199,9 @@ class OpenBoundary(PDES):
     nw = 2
     no = 2
     # Residual oil saturation
-    Sor = 0.1
+    Sor = 0.0
     # Residual water saturation
-    Swc = 0.2
+    Swc = 0.0
     # End points
     krwmax = 1
     kromax = 1
@@ -235,11 +224,12 @@ class OpenBoundary(PDES):
     vw = lambda S: g * (rhoo - rhow) / (phi * muw) * c * conv * fw(S)
     v = vw(u)
     # set equations
-    self.equations = {}
+    # self.equations = {'open_boundary': v ** 2}
     # u.diff(t)
     # + normal_x * c * u.diff(x)
     # + normal_y * c * u.diff(y)
     # + normal_z * c * u.diff(z)
+    self.equations = {}
     self.equations['open_boundary'] = (u.diff(t, 1)
                                        + v.diff(x, 1)
                                        + f.diff(y, 1)
@@ -257,7 +247,7 @@ class WaveTrain(TrainDomain):
     # (1+tanh(80*(x-0.5)))/2
     initial_conditions = geo.interior_bc(outvar_sympy={'z': exp(-200 * ((x - 0.8) ** 2 + (y - 0.5) ** 2)),
                                                        'z__t': 0},
-                                         batch_size_per_area=2048,
+                                         batch_size_per_area=2048//2,
                                          lambda_sympy={'lambda_z': 100.0,
                                                        'lambda_z__t': 1.0},
                                          bounds={x: (0, 1), y: (0, 1)},
@@ -266,7 +256,7 @@ class WaveTrain(TrainDomain):
 
     # boundary conditions
     edges = geo.boundary_bc(outvar_sympy={'open_boundary': 0},
-                            batch_size_per_area=2048,
+                            batch_size_per_area=2048//2,
                             lambda_sympy={'lambda_open_boundary': 1.0 * time_length},
                             param_ranges=time_range)
     self.add(edges, name="Edges")
@@ -274,7 +264,7 @@ class WaveTrain(TrainDomain):
     # interior
     interior = geo.interior_bc(outvar_sympy={'wave_equation': 0},
                                bounds={x: (0, 1), y: (0, 1)},
-                               batch_size_per_area=2048,
+                               batch_size_per_area=2048//2,
                                lambda_sympy={'lambda_wave_equation': time_length},
                                param_ranges=time_range)
     self.add(interior, name="Interior")
@@ -304,9 +294,8 @@ class WaveSolver(Solver):
 
     # self.arch.set_frequencies(('full', [i/2 for i in range(0, 10)]))
 
-    self.equations = (WaveEquation(u='z', c='c', dim=2, time=True).make_node(stop_gradients=['c', 'c__x', 'c__y'])
+    self.equations = (WaveEquation(u='z', c='c', dim=2, time=True).make_node(stop_gradients=['c__x', 'c__y'])
                       + OpenBoundary(u='z', c='c', dim=2, time=True).make_node(stop_gradients=['c', 'c__x', 'c__y']))
-                      # + [Node.from_sympy((tanh(Symbol('z_star')) + 0.0) / 1.0, 'z')])
 
     wave_net = self.arch.make_node(name='wave_net',
                                    inputs=['x', 'y', 't'],
