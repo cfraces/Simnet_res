@@ -99,7 +99,7 @@ class WaveSolver(Solver):
   @classmethod  # Explain This
   def update_defaults(cls, defaults):
     defaults.update({
-      'network_dir': './network_checkpoint_wave_2d_{}'.format(int(time.time())),
+      'network_dir': './checkpoint_2d/wave_{}'.format(int(time.time())),
       'rec_results_cpu': True,
       'max_steps': 400000,
       'decay_steps': 4000,

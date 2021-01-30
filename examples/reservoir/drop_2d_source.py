@@ -6,12 +6,12 @@ import time
 from simnet.solver import Solver
 from simnet.dataset import TrainDomain, ValidationDomain, InferenceDomain
 from simnet.data import Validation, BC, Inference
-from simnet.sympy_utils.geometry_2d import Rectangle, Circle, Line
+from simnet.sympy_utils.geometry_2d import Rectangle, Circle
 from simnet.pdes import PDES
-from simnet.PDES.wave_equation import WaveEquation
 from simnet.controller import SimNetController
 from simnet.node import Node
-from simnet.architecture.fourier_net import FourierNetArch
+
+# from simnet.architecture.fourier_net import FourierNetArch
 
 # define geometry
 geo = Rectangle((0, 0),
@@ -30,6 +30,97 @@ t_symbol = Symbol('t')
 time_range = {t_symbol: (0, time_length)}
 
 
+# Define wave equation, we will not use SimNet version
+# because we want the equation z_tt = c^2 (z_xx + z_yy)
+# instead of z_tt = grad(c^2 (z_x + z_y))
+class WaveEquation(PDES):
+  """
+  Wave equation
+
+  Parameters
+  ==========
+  u : str
+      The dependent variable.
+  c : float, Sympy Symbol/Expr, str
+      Wave speed coefficient. If `c` is a str then it is
+      converted to Sympy Function of form 'c(x,y,z,t)'.
+      If 'c' is a Sympy Symbol or Expression then this
+      is substituted into the equation.
+  dim : int
+      Dimension of the wave equation (1, 2, or 3). Default is 2.
+  time : bool
+      If time-dependent equations or not. Default is True.
+  """
+  name = 'WaveEquation'
+
+  def __init__(self, u='u', c='c', dim=3, time=True):
+    # set params
+    self.u = u
+    self.dim = dim
+    self.time = time
+
+    # coordinates
+    x, y, z = Symbol('x'), Symbol('y'), Symbol('z')
+
+    # time
+    t = Symbol('t')
+
+    # make input variables
+    input_variables = {'x': x, 'y': y, 'z': z, 't': t}
+    if self.dim == 1:
+      input_variables.pop('y')
+      input_variables.pop('z')
+    elif self.dim == 2:
+      input_variables.pop('z')
+    if not self.time:
+      input_variables.pop('t')
+
+    # Scalar function
+    assert type(u) == str, "u needs to be string"
+    u = Function(u)(*input_variables)
+
+    # wave speed coefficient
+    if type(c) is str:
+      c = Function(c)(*input_variables)
+    elif type(c) in [float, int]:
+      c = Number(c)
+
+    nw = 2
+    no = 2
+    # Residual oil saturation
+    Sor = 0.0
+    # Residual water saturation
+    Swc = 0.0
+    # End points
+    krwmax = 1
+    kromax = 1
+    # Gravity
+    g = 32.2  # ft/s2   9.81 / (0.304)
+    phi = 0.25
+    # Relperms from Corey-Brooks
+    Sstar = lambda S: (S - Swc) / (1 - Swc - Sor)
+    krw = lambda S: krwmax * Sstar(S) ** nw
+    kro = lambda S: kromax * (1 - Sstar(S)) ** no
+    # Densities (lbm / scf)
+    rhoo = 40  # Oil
+    rhow = 62.238  # Water
+    # Viscosities
+    muo = 2e-4  # lb/ft-s
+    muw = 6e-6
+    conv = 9.1688e-8  # md to ft2
+    fw = lambda S: krw(S) * kro(S) / (kro(S) + krw(S) * muo / muw)
+    f = fw(u)
+    vw = lambda S: g * (rhoo - rhow) / (phi * muw) * c * conv * fw(S)
+    v = vw(u)
+
+    # set equations
+    self.equations = {}
+    self.equations['wave_equation'] = (u.diff(t, 1)
+                                       + v.diff(x, 1)
+                                       + f.diff(y, 1)
+                                       - c * u.diff(z, 1))
+
+
 class WaveTrain(TrainDomain):
   def __init__(self, **config):
     super(WaveTrain, self).__init__()
@@ -42,7 +133,7 @@ class WaveTrain(TrainDomain):
 
     # interior
     f0 = 15
-    gaussian = exp(-1000 * ((x - 0.5) ** 2 + (y - 0.5) ** 2))
+    gaussian = exp(-1000 * ((x - 0.7) ** 2 + (y - 0.5) ** 2))
     source = f0 ** 2 * gaussian * (1 - 2 * pi ** 2 * f0 ** 2 * (t_symbol - 1 / f0) ** 2) * exp(
       -pi ** 2 * f0 ** 2 * (t_symbol - 1 / f0) ** 2)
     interior = geo.interior_bc(outvar_sympy={'wave_equation': -source},
@@ -99,7 +190,7 @@ class WaveSolver(Solver):
   @classmethod  # Explain This
   def update_defaults(cls, defaults):
     defaults.update({
-      'network_dir': './network_checkpoint_wave_2d_{}'.format(int(time.time())),
+      'network_dir': './checkpoint_2d/wave_{}'.format(int(time.time())),
       'rec_results_cpu': True,
       'max_steps': 400000,
       'decay_steps': 4000,
