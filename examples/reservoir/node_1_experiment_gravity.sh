@@ -1,0 +1,14 @@
+CUDA_VISIBLE_DEVICES=1 nohup python reservoir_uniform.py --xla=True  --start_lr=1e-3 --network_dir=./checkpoint_2d/uniform1e_3> log_uniform.log </dev/null 2>&1 &&
+CUDA_VISIBLE_DEVICES=1 nohup python reservoir_uniform.py --xla=True  --decay_steps=3000 --network_dir=./checkpoint_2d/uniform3000> log_uniform.log </dev/null 2>&1 &&
+CUDA_VISIBLE_DEVICES=1 nohup python reservoir_uniform.py --xla=True  --decay_steps=3500 --network_dir=./checkpoint_2d/uniform3500> log_uniform.log </dev/null 2>&1 &&
+CUDA_VISIBLE_DEVICES=1 nohup python reservoir_uniform.py --xla=True  --decay_steps=4500 --network_dir=./checkpoint_2d/uniform4500> log_uniform.log </dev/null 2>&1 &&
+CUDA_VISIBLE_DEVICES=1 nohup python reservoir_uniform.py --xla=True  --decay_steps=5000 --network_dir=./checkpoint_2d/uniform5000> log_uniform.log </dev/null 2>&1 &&
+CUDA_VISIBLE_DEVICES=1 nohup python reservoir_inversion.py --xla=True  --start_lr=2e-4 --network_dir=./checkpoint_2d/inversion2e_4> log_inversion.log </dev/null 2>&1 &&
+CUDA_VISIBLE_DEVICES=1 nohup python reservoir_inversion.py --xla=True  --start_lr=3e-4 --network_dir=./checkpoint_2d/inversion3e_4> log_inversion.log </dev/null 2>&1 &&
+CUDA_VISIBLE_DEVICES=1 nohup python reservoir_inversion.py --xla=True  --start_lr=4e-4 --network_dir=./checkpoint_2d/inversion4e_4> log_inversion.log </dev/null 2>&1 &&
+CUDA_VISIBLE_DEVICES=1 nohup python reservoir_inversion.py --xla=True  --start_lr=5e-4 --network_dir=./checkpoint_2d/inversion5e_4> log_inversion.log </dev/null 2>&1 &&
+CUDA_VISIBLE_DEVICES=1 nohup python reservoir_inversion.py --xla=True  --start_lr=6e-4 --network_dir=./checkpoint_2d/inversion6e_4> log_inversion.log </dev/null 2>&1 &&
+CUDA_VISIBLE_DEVICES=1 nohup python reservoir_inversion.py --xla=True  --decay_steps=3000 --network_dir=./checkpoint_2d/inversion3000> log_inversion.log </dev/null 2>&1 &&
+CUDA_VISIBLE_DEVICES=1 nohup python reservoir_inversion.py --xla=True  --decay_steps=4500 --network_dir=./checkpoint_2d/inversion4500> log_inversion.log </dev/null 2>&1 &&
+CUDA_VISIBLE_DEVICES=1 nohup python reservoir_inversion.py --xla=True  --decay_steps=5000 --network_dir=./checkpoint_2d/inversion5000> log_inversion.log </dev/null 2>&1 &&
+CUDA_VISIBLE_DEVICES=1 nohup python reservoir_inversion.py --xla=True  --start_lr=1e-3 --network_dir=./checkpoint_2d/inversion1e_3> log_inversion.log </dev/null 2>&1 &

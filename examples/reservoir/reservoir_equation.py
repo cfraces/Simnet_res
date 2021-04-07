@@ -231,10 +231,7 @@ class ClosedBoundary(PDES):
 
       # set equations
       self.equations = {}
-      self.equations['closed_boundary'] = (u.diff(t, 1)
-                                         + v.diff(x, 1)
-                                         + f.diff(y, 1)
-                                         + f.diff(z, 1))
+      self.equations['closed_boundary'] = v
 
 
 # define open boundary conditions
