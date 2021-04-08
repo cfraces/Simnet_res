@@ -5,25 +5,40 @@ import time
 from simnet.solver import Solver
 from simnet.dataset import TrainDomain, ValidationDomain, InferenceDomain
 from simnet.data import Validation, BC, Inference
-from simnet.sympy_utils.geometry_2d import Rectangle, Circle
+from simnet.sympy_utils.geometry_2d import Rectangle, Circle, Channel2D, Line
 from simnet.pdes import PDES
 from simnet.controller import SimNetController
 
 # params for domain
-height = 1.0
-width = 1.0
+channel_length = (-2.5, 2.5)
+channel_width = (-0.5, 0.5)
 permeability = 1.0
 
 # define geometry
-geo = Rectangle((-width / 2, -height / 2), (width / 2, height / 2))
+channel = Channel2D((channel_length[0], channel_width[0]),
+                    (channel_length[1], channel_width[1]))
+geo = channel
+
+inlet = Line((channel_length[0], channel_width[0]),
+             (channel_length[0], channel_width[1]), -1)
+outlet = Line((channel_length[1], channel_width[0]),
+              (channel_length[1], channel_width[1]), 1)
+plane1 = Line((channel_length[0] + 0.5, channel_width[0]),
+              (channel_length[0] + 0.5, channel_width[1]), 1)
+plane2 = Line((channel_length[0] + 1.0, channel_width[0]),
+              (channel_length[0] + 1.0, channel_width[1]), 1)
+plane3 = Line((channel_length[0] + 3.0, channel_width[0]),
+              (channel_length[0] + 3.0, channel_width[1]), 1)
+plane4 = Line((channel_length[0] + 3.5, channel_width[0]),
+              (channel_length[0] + 3.5, channel_width[1]), 1)
 
 # define sympy variables to parametrize domain curves
-x, y = Symbol('x'), Symbol('y')
-
-# define time domain
-time_length = 2.0
-t_symbol = Symbol('t')
-time_range = {t_symbol: (0, time_length)}
+# x, y = Symbol('x'), Symbol('y')
+#
+# # define time domain
+# time_length = 2.0
+# t_symbol = Symbol('t')
+# time_range = {t_symbol: (0, time_length)}
 
 
 class TwoPhaseFlow(PDES):
