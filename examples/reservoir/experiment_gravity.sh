@@ -1,11 +1,2 @@
-CUDA_VISIBLE_DEVICES=0 nohup python reservoir_drop.py --xla=True --start_lr=5e-4 --network_dir=./checkpoint_2d/drop5e_4> log_drop.log </dev/null 2>&1 &&
-CUDA_VISIBLE_DEVICES=0 nohup python reservoir_drop.py --xla=True --start_lr=6e-4 --network_dir=./checkpoint_2d/drop6e_4> log_drop.log </dev/null 2>&1 &&
-CUDA_VISIBLE_DEVICES=0 nohup python reservoir_drop.py --xla=True --start_lr=7e-4 --network_dir=./checkpoint_2d/drop7e_4> log_drop.log </dev/null 2>&1 &&
-CUDA_VISIBLE_DEVICES=0 nohup python reservoir_drop.py --xla=True --start_lr=8e-4 --network_dir=./checkpoint_2d/drop8e_4> log_drop.log </dev/null 2>&1 &&
-CUDA_VISIBLE_DEVICES=0 nohup python reservoir_drop.py --xla=True --start_lr=9e-4 --network_dir=./checkpoint_2d/drop9e_4> log_drop.log </dev/null 2>&1 &&
-CUDA_VISIBLE_DEVICES=0 nohup python reservoir_drop.py --xla=True --decay_steps=3000 --network_dir=./checkpoint_2d/drop3000> log_drop.log </dev/null 2>&1 &&
-CUDA_VISIBLE_DEVICES=0 nohup python reservoir_drop.py --xla=True --decay_steps=3500 --network_dir=./checkpoint_2d/drop3500> log_drop.log </dev/null 2>&1 &&
-CUDA_VISIBLE_DEVICES=0 nohup python reservoir_drop.py --xla=True --decay_steps=4500 --network_dir=./checkpoint_2d/drop4500> log_drop.log </dev/null 2>&1 &&
-CUDA_VISIBLE_DEVICES=0 nohup python reservoir_drop.py --xla=True --decay_steps=5000 --network_dir=./checkpoint_2d/drop5000> log_drop.log </dev/null 2>&1 &&
-CUDA_VISIBLE_DEVICES=0 nohup python reservoir_drop.py --xla=True --decay_steps=5500 --network_dir=./checkpoint_2d/drop5500> log_drop.log </dev/null 2>&1 &&
-CUDA_VISIBLE_DEVICES=0 nohup python reservoir_drop.py --xla=True --start_lr=3e-3 --network_dir=./checkpoint_2d/drop3e_3> log_drop.log </dev/null 2>&1 &
+CUDA_VISIBLE_DEVICES=0 nohup python reservoir_drop.py --xla=True --start_lr=1e-4 --network_dir=./checkpoint_2d/drop_diff_counter_1e_4> log_drop.log </dev/null 2>&1 &&
+CUDA_VISIBLE_DEVICES=0 nohup python reservoir_drop.py --xla=True --start_lr=4e-4 --network_dir=./checkpoint_2d/drop_diff_x_4e_4> log_drop.log </dev/null 2>&1 &

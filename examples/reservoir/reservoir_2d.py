@@ -8,11 +8,15 @@ from simnet.data import Validation, BC, Inference
 from simnet.sympy_utils.geometry_2d import Rectangle, Circle, Channel2D, Line
 from simnet.pdes import PDES
 from simnet.controller import SimNetController
+from simnet.sympy_utils.functions import parabola
 
 # params for domain
 channel_length = (-2.5, 2.5)
 channel_width = (-0.5, 0.5)
 permeability = 1.0
+inlet_vel = 1.5
+
+x, y, t_symbol = Symbol('x'), Symbol('y'), Symbol('t')
 
 # define geometry
 channel = Channel2D((channel_length[0], channel_width[0]),
@@ -32,14 +36,6 @@ plane3 = Line((channel_length[0] + 3.0, channel_width[0]),
 plane4 = Line((channel_length[0] + 3.5, channel_width[0]),
               (channel_length[0] + 3.5, channel_width[1]), 1)
 
-# define sympy variables to parametrize domain curves
-# x, y = Symbol('x'), Symbol('y')
-#
-# # define time domain
-# time_length = 2.0
-# t_symbol = Symbol('t')
-# time_range = {t_symbol: (0, time_length)}
-
 
 class TwoPhaseFlow(PDES):
   """
@@ -55,7 +51,7 @@ class TwoPhaseFlow(PDES):
         If 'perm' is a Sympy Symbol or Expression then this
         is substituted into the equation.
     dim : int
-        Dimension of the wave equation (1, 2, or 3). Default is 2.
+        Dimension of the equation (1, 2, or 3). Default is 2.
     time : bool
         If time-dependent equations or not. Default is True.
   """
@@ -77,6 +73,7 @@ class TwoPhaseFlow(PDES):
 
     # pressure component
     p = Function('p')(*input_variables)
+
 
     # permeability
     if type(permeability) is str:
@@ -113,33 +110,49 @@ class TwoPhaseFlow(PDES):
     self.equations = {}
     self.equations['water_residual'] = (Twx * p.diff(x)).diff(x) + (Twy * p.diff(y)).diff(y) - (phi * sw / Bw).diff(t)
     self.equations['oil_residual'] = (Tox * p.diff(x)).diff(x) + (Toy * p.diff(y)).diff(y) + (phi * sw / Bo).diff(t)
+    self.equations['flow_x'] = Twx * p.diff(x) + Tox * p.diff(x)
+    self.equations['flow_y'] = Twy * p.diff(y) + Toy * p.diff(y)
 
 
 class ReservoirTrain(TrainDomain):
   def __init__(self, **config):
     super(ReservoirTrain, self).__init__()
 
-    # initial condition
-    initial_condition = geo.boundary_bc(outvar_sympy={'s_w': exp(-200 * ((x - 0.8) ** 2 + (y - 0.5) ** 2)),
-                                                      's_w__t': 0,
-                                                      'p': 15},
-                                        bounds={x: (-width / 2, width / 2), y: (-height / 2, height / 2)},
-                                        batch_size_per_area=10000,
-                                        param_ranges={t_symbol: 0})
-    self.add(initial_condition, name="IC")
 
-    # no slip
-    edges = geo.boundary_bc(outvar_sympy={'s_w': 1, 'p': 15},
-                            batch_size_per_area=10000,
-                            param_ranges=time_range)
-    self.add(edges, name="Edges")
+    # initial
+    initial_conditions = geo.interior_bc(outvar_sympy={'sw': 0,
+                                                       'sw__t': 0},
+                                         batch_size_per_area=2048 // 2,
+                                         lambda_sympy={'lambda_sw': 100.0,
+                                                       'lambda_sw__t': 1.0},
+                                         bounds={x: (channel_length), y: (channel_width)},
+                                         param_ranges={t_symbol: 0}
+                                         )
+    self.add(initial_conditions, name='IC')
 
-    # Interior
-    interior = geo.interior_bc(outvar_sympy={'water_residual': 0, 'oil_residual': 0},
-                               bounds={x: (-width / 2, width / 2), y: (-height / 2, height / 2)},
-                               batch_size_per_area=10000,
-                               param_ranges=time_range
-                               )
+    # inlet
+    parabola_sympy = parabola(y, inter_1=channel_width[0], inter_2=channel_width[1], height=inlet_vel)
+    inletBC = inlet.boundary_bc(outvar_sympy={'sw': 1, 'p': 1},
+                                batch_size_per_area=64)
+    self.add(inletBC, name="Inlet")
+
+    # outlet
+    outletBC = outlet.boundary_bc(outvar_sympy={'p': 0},
+                                  batch_size_per_area=64)
+    self.add(outletBC, name="Outlet")
+
+    # so slip channel
+    channelWall = channel.boundary_bc(outvar_sympy={'flow_x': 0, 'flow_y': 0},
+                                      batch_size_per_area=256)
+    self.add(channelWall, name="ChannelWall")
+
+    # interior
+    interior = geo.interior_bc(
+      outvar_sympy={'residual_water': 0, 'residual_oil': 0},
+      bounds={x: (channel_length), y: (channel_width)},
+      lambda_sympy={'lambda_residual_water': geo.sdf,
+                    'lambda_residual_oil': geo.sdf},
+      batch_size_per_area=1000)
     self.add(interior, name="Interior")
 
 
@@ -148,8 +161,8 @@ class ReservoirInference(InferenceDomain):
     super(ReservoirInference, self).__init__()
     # inf data
     for i, specific_t in enumerate(np.linspace(0, time_length, 40)):
-      interior = geo.sample_interior(5000,
-                                     bounds={x: (-width / 2, width / 2), y: (-height / 2, height / 2)},
+      interior = geo.sample_interior(10000,
+                                     bounds={x: (channel_length), y: (channel_width)},
                                      param_ranges={t_symbol: float(specific_t)})
       inf = Inference(interior, ['s_w', 'p'])
       self.add(inf, "Inference_" + str(i).zfill(4))
