@@ -376,9 +376,9 @@ class GravitySegregationWeighted(PDES):
     nw = 2
     no = 2
     # Residual oil saturation
-    Sor = 0.05
+    Sor = 0.0
     # Residual water saturation
-    Swc = 0.1
+    Swc = 0.0
     # End points
     krwmax = 1
     kromax = 1
@@ -397,10 +397,9 @@ class GravitySegregationWeighted(PDES):
     muw = 6e-6
     conv = 9.1688e-8  # md to ft2
     fw = lambda S: krw(S) * kro(S) / (kro(S) + krw(S) * muo / muw)
-    f = fw(sw)
     vw = g * (rhoo - rhow) / (phi * muw) * perm * conv * fw(sw)
     # Oil phase
-    fo = lambda S: kro(S) / (1 + kro(S) * muw / (krw(S) * muo))
+    fo = lambda S: kro(S) * krw(S) / (krw(S) + kro(S) * muw / muo)
     vo = g * (rhow - rhoo) * perm * conv * fo(sw) / (muo * phi)
     # set equations
     self.equations = {}
@@ -409,6 +408,7 @@ class GravitySegregationWeighted(PDES):
                                              / (Function(self.weighting)(*input_variables) + 1))
     self.equations['closed_boundary_w'] = vw
     self.equations['closed_boundary_o'] = vo
+    self.equations['counter_current'] = vw + vo
 
 
 class GradMagSW(PDES):
@@ -434,3 +434,93 @@ class GradMagSW(PDES):
     # set equations
     self.equations = {}
     self.equations['grad_magnitude_' + self.sw] = sw.diff(t) ** 2 + sw.diff(x) ** 2
+
+
+class TwoPhaseFlow(PDES):
+  """
+  Darcy with gravity
+
+  Parameters
+  ==========
+  u : str
+      The dependent variable.
+  c : float, Sympy Symbol/Expr, str
+      Wave speed coefficient. If `c` is a str then it is
+      converted to Sympy Function of form 'c(x,y,z,t)'.
+      If 'c' is a Sympy Symbol or Expression then this
+      is substituted into the equation.
+  dim : int
+      Dimension of the wave equation (1, 2, or 3). Default is 2.
+  time : bool
+      If time-dependent equations or not. Default is True.
+  """
+  name = 'TwoPhaseFlow'
+
+  def __init__(self, sw='sw', perm='perm', dim=3, time=True):
+    # set params
+    self.sw = sw
+    self.dim = dim
+    self.time = time
+
+    # coordinates
+    x, y, z = Symbol('x'), Symbol('y'), Symbol('z')
+
+    # time
+    t = Symbol('t')
+
+    # make input variables
+    input_variables = {'x': x, 'y': y, 'z': z, 't': t}
+    if self.dim == 1:
+      input_variables.pop('y')
+      input_variables.pop('z')
+    elif self.dim == 2:
+      input_variables.pop('z')
+    if not self.time:
+      input_variables.pop('t')
+
+    # Scalar function
+    assert type(sw) == str, "u needs to be string"
+    sw = Function(sw)(*input_variables)
+
+    # permeability coefficient
+    if type(perm) is str:
+      perm = Function(perm)(*input_variables)
+    elif type(perm) in [float, int]:
+      perm = Number(perm)
+
+    nw = 2
+    no = 2
+    # Residual oil saturation
+    Sor = 0.0
+    # Residual water saturation
+    Swc = 0.0
+    # End points
+    krwmax = 1
+    kromax = 1
+    # Gravity
+    g = 32.2  # ft/s2   9.81 / (0.304)
+    phi = 0.25
+    # Relperms from Corey-Brooks
+    Sstar = lambda S: (S - Swc) / (1 - Swc - Sor)
+    krw = lambda S: krwmax * Sstar(S) ** nw
+    kro = lambda S: kromax * (1 - Sstar(S)) ** no
+    # Densities (lbm / scf)
+    rhoo = 40  # Oil
+    rhow = 62.238  # Water
+    # Viscosities
+    muo = 2e-4  # lb/ft-s
+    muw = 6e-6
+    conv = 9.1688e-8  # md to ft2
+    fw = lambda S: krw(S) * kro(S) / (kro(S) + krw(S) * muo / muw)
+    vw = g * (rhoo - rhow) / (phi * muw) * perm * conv * fw(sw)
+    # Oil phase
+    fo = lambda S: kro(S) * krw(S) / (krw(S) + kro(S) * muw / muo)
+    vo = g * (rhow - rhoo) * perm * conv * fo(sw) / (muo * phi)
+
+    # set equations
+    self.equations = {}
+    self.equations['darcy_equation'] = (sw.diff(t, 1)
+                                        + vw.diff(x, 1))
+    self.equations['counter_current'] = vw + vo
+    self.equations['closed_boundary_w'] = vw
+    self.equations['closed_boundary_o'] = vo

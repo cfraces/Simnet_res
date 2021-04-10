@@ -1,2 +1,3 @@
-CUDA_VISIBLE_DEVICES=1 nohup python reservoir_inversion.py --xla=True  --start_lr=3e-4 --network_dir=./checkpoint_2d/inversion_counter> log_inversion.log </dev/null 2>&1 &&
-CUDA_VISIBLE_DEVICES=1 nohup python reservoir_inversion.py --xla=True  --start_lr=3e-4 --network_dir=./checkpoint_2d/inversion_counter_x> log_inversion.log </dev/null 2>&1 &
+CUDA_VISIBLE_DEVICES=1 nohup python reservoir_uniform.py --xla=True> log_drop.log </dev/null 2>&1 &&
+CUDA_VISIBLE_DEVICES=1 nohup python reservoir_uniform.py --xla=True> log_uniform.log </dev/null 2>&1 &&
+CUDA_VISIBLE_DEVICES=1 nohup python reservoir_inversion.py --xla=True> log_inversion.log </dev/null 2>&1 &
