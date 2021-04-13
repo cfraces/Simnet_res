@@ -134,7 +134,7 @@ class GravitySegregationSolver(Solver):
       'network_dir': './checkpoint_gravity_1d/inversion_{}'.format(int(time.time())),
       'max_steps': 70000,
       'decay_steps': 500,
-      'start_lr': 1e-3,
+      'start_lr': 3e-4,
       'rec_results_cpu': True,
       'amp': True,
       'xla': True

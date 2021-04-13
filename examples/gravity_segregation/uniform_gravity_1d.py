@@ -22,7 +22,7 @@ geo = Line1D(0, L)
 
 # define sympy varaibles to parametize domain curves
 t_symbol = Symbol('t')
-time_length = 2.0
+time_length = 5.0
 time_range = {t_symbol: (0, time_length)}
 
 
@@ -33,7 +33,7 @@ class GravitySegregationTrain(TrainDomain):
     x = Symbol('x')
 
     # initial conditions
-    IC = geo.interior_bc(outvar_sympy={'sw': 0.25, 'sw__t': 0},
+    IC = geo.interior_bc(outvar_sympy={'sw': 0.5, 'sw__t': 0},
                          bounds={x: (0, L)},
                          batch_size_per_area=2000,
                          lambda_sympy={'lambda_sw': 1.0,
@@ -62,11 +62,10 @@ class GravitySegregationTrain(TrainDomain):
     self.add(topWall, name="TopWall")
 
     # bottom wall
-    bottomWall = geo.boundary_bc(outvar_sympy={'closed_boundary_w': 0, 'closed_boundary_o': 0, 'sw': 1.0},
+    bottomWall = geo.boundary_bc(outvar_sympy={'closed_boundary_w': 0, 'closed_boundary_o': 0},
                                  batch_size_per_area=2000,
                                  lambda_sympy={'lambda_closed_boundary_w': 1.0,
-                                               'lambda_closed_boundary_o': 1.0,
-                                               'lambda_sw': 1.0},
+                                               'lambda_closed_boundary_o': 1.0},
                                  param_ranges=time_range,
                                  criteria=x <= 0)
     self.add(bottomWall, name="BottomWall")
@@ -136,7 +135,7 @@ class GravitySegregationSolver(Solver):
       'network_dir': './checkpoint_gravity_1d/uniform_{}'.format(int(time.time())),
       'max_steps': 70000,
       'decay_steps': 500,
-      'start_lr': 1e-3,
+      'start_lr': 3e-4,
       'rec_results_cpu': True,
       'amp': True,
       'xla': True

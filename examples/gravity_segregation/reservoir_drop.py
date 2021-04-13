@@ -51,12 +51,27 @@ class ReservoirTrain(TrainDomain):
     self.add(initial_conditions, name="IC")
 
     # boundary conditions
-    edges = geo.boundary_bc(outvar_sympy={'closed_boundary_w': 0, 'closed_boundary_o': 0},
-                            batch_size_per_area=2048 // 2,
-                            lambda_sympy={'lambda_closed_boundary_w': 1.0 * time_length,
-                                          'lambda_closed_boundary_o': 1.0 * time_length},
-                            param_ranges=time_range)
-    self.add(edges, name="Edges")
+    # edges = geo.boundary_bc(outvar_sympy={'closed_boundary_w': 0, 'closed_boundary_o': 0},
+    #                         batch_size_per_area=2048 // 2,
+    #                         lambda_sympy={'lambda_closed_boundary_w': 1.0 * time_length,
+    #                                       'lambda_closed_boundary_o': 1.0 * time_length},
+    #                         param_ranges=time_range)
+    # self.add(edges, name="Edges")
+
+    topWall = geo.boundary_bc(outvar_sympy={'closed_boundary_w': 0},
+                              batch_size_per_area=2000,
+                              lambda_sympy={'lambda_closed_boundary_w': 1.0},
+                              param_ranges=time_range,
+                              criteria=x >= 1)
+    self.add(topWall, name="TopWall")
+
+    # bottom wall
+    bottomWall = geo.boundary_bc(outvar_sympy={'closed_boundary_w': 0},
+                                 batch_size_per_area=2000,
+                                 lambda_sympy={'lambda_closed_boundary_w': 1.0},
+                                 param_ranges=time_range,
+                                 criteria=x <= 0)
+    self.add(bottomWall, name="BottomWall")
 
     # interior
     # TODO: Try removing countercurrent

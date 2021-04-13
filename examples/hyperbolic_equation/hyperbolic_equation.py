@@ -76,12 +76,14 @@ class BuckleyEquation(PDES):
 
     # Piecewise f
     # f = Max(-(1.7075*u - 0.3415)*(Heaviside(u - 0.6597) - 1) + 2*(u - 0.2)**2*Heaviside(u - 0.6597)/(2*(u - 0.2)**2 + (u - 1)**2), 0)
+    f = Max(-(1.366025403514163 * u) * (Heaviside(u - 0.577357735773577) - 1)
+            + 2 * (u ** 2) * Heaviside(u - 0.577357735773577) / (2 * (u) ** 2 + (u - 1) ** 2), 0)
 
     # True f
-    f = (u - c) * (u - c) / ((u - c) ** 2 + (1 - u) * (1 - u) / 2)
+    # f = (u - c) * (u - c) / ((u - c) ** 2 + (1 - u) * (1 - u) / 2)
 
     self.equations['buckley_equation'] = (u.diff(t)
-                                          + f.diff(x)
+                                          + f.diff(x).replace(DiracDelta, lambda x: 0)
                                           + (c * u).diff(y)
                                           + (c * u).diff(z))
 
