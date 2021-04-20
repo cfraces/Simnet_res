@@ -88,7 +88,7 @@ class GravitySegregationVal(ValidationDomain):
     deltaT = time_length * 0.01
     deltaX = 0.01 / 2.56
     x = np.arange(0, L, deltaX)
-    t = np.arange(0, L, deltaT)
+    t = np.arange(0, time_length, deltaT)
     X, T = np.meshgrid(x, t, indexing='ij')
     X = np.expand_dims(X.flatten(), axis=-1)
     T = np.expand_dims(T.flatten(), axis=-1)
@@ -100,24 +100,24 @@ class GravitySegregationVal(ValidationDomain):
     self.add(val, name='Val')
 
 
-# class GravitySegregationInference(InferenceDomain):
-#   def __init__(self, **config):
-#     super(GravitySegregationInference, self).__init__()
-#     x = Symbol('x')
-#     # inf data
-#     for i, specific_t in enumerate(np.linspace(0, time_length, 40)):
-#       interior = geo.sample_interior(5000,
-#                                      bounds={x: (0, L)},
-#                                      param_ranges={t_symbol: float(specific_t)})
-#       inf = Inference(interior, ['sw'])
-#       self.add(inf, "Inference_" + str(i).zfill(4))
+class GravitySegregationInference(InferenceDomain):
+  def __init__(self, **config):
+    super(GravitySegregationInference, self).__init__()
+    x = Symbol('x')
+    # inf data
+    for i, specific_t in enumerate(np.linspace(0, time_length, 40)):
+      interior = geo.sample_interior(5000,
+                                     bounds={x: (0, L)},
+                                     param_ranges={t_symbol: float(specific_t)})
+      inf = Inference(interior, ['sw'])
+      self.add(inf, "Inference_" + str(i).zfill(4))
 
 
 # Define neural network
 class GravitySegregationSolver(Solver):
   train_domain = GravitySegregationTrain
-  # inference_domain = GravitySegregationInference
   val_domain = GravitySegregationVal
+  inference_domain = GravitySegregationInference
 
   def __init__(self, **config):
     super(GravitySegregationSolver, self).__init__(**config)

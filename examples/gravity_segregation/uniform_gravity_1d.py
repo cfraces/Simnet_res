@@ -69,11 +69,10 @@ class GravitySegregationTrain(TrainDomain):
     self.add(bottomWall, name="BottomWall")
 
     # interior
-    interior = geo.interior_bc(outvar_sympy={'gravity_segregation_o': 0, 'gravity_segregation': 0},
+    interior = geo.interior_bc(outvar_sympy={'gravity_segregation_o': 0},
                                bounds={x: (0, L)},
                                batch_size_per_area=10000,
-                               lambda_sympy={'lambda_gravity_segregation_o': geo.sdf,
-                                             'lambda_gravity_segregation': geo.sdf},
+                               lambda_sympy={'lambda_gravity_segregation_o': geo.sdf},
                                param_ranges=time_range)
     self.add(interior, name="Interior")
 
@@ -86,7 +85,7 @@ class GravitySegregationVal(ValidationDomain):
     deltaT = time_length * 0.01
     deltaX = 0.01 / 2.56
     x = np.arange(0, L, deltaX)
-    t = np.arange(0, L, deltaT)
+    t = np.arange(0, time_length, deltaT)
     X, T = np.meshgrid(x, t, indexing='ij')
     X = np.expand_dims(X.flatten(), axis=-1)
     T = np.expand_dims(T.flatten(), axis=-1)
@@ -114,8 +113,8 @@ class GravitySegregationInference(InferenceDomain):
 # Define neural network
 class GravitySegregationSolver(Solver):
   train_domain = GravitySegregationTrain
-  # inference_domain = GravitySegregationInference
   val_domain = GravitySegregationVal
+  inference_domain = GravitySegregationInference
 
   def __init__(self, **config):
     super(GravitySegregationSolver, self).__init__(**config)
