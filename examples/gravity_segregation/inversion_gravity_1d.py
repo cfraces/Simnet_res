@@ -22,7 +22,7 @@ geo = Line1D(0, L)
 
 # define sympy varaibles to parametize domain curves
 t_symbol = Symbol('t')
-time_length = 2.0
+time_length = 5.0
 time_range = {t_symbol: (0, time_length)}
 
 
@@ -51,30 +51,30 @@ class GravitySegregationTrain(TrainDomain):
                          )
     self.add(BC, name="BC")"""
     # Top wall
-    topWall = geo.boundary_bc(outvar_sympy={'closed_boundary_o': 0, 'closed_boundary_w': 0},
+    # TODO: try 2 phase boundary
+    topWall = geo.boundary_bc(outvar_sympy={'closed_boundary_o': 0},
                               batch_size_per_area=2000,
-                              lambda_sympy={'lambda_closed_boundary_o': 1.0,
-                                            'lambda_closed_boundary_w': 1.0},
+                              lambda_sympy={'lambda_closed_boundary_o': 1.0},
                               param_ranges=time_range,
                               criteria=x >= L)
     self.add(topWall, name="TopWall")
 
     # bottom wall
-    bottomWall = geo.boundary_bc(outvar_sympy={'closed_boundary_w': 0, 'closed_boundary_o': 0},
+    bottomWall = geo.boundary_bc(outvar_sympy={'closed_boundary_w': 0},
                                  batch_size_per_area=2000,
-                                 lambda_sympy={'lambda_closed_boundary_w': 1.0,
-                                               'lambda_closed_boundary_o': 1.0},
+                                 lambda_sympy={'lambda_closed_boundary_w': 1.0},
                                  param_ranges=time_range,
                                  criteria=x <= 0)
     self.add(bottomWall, name="BottomWall")
 
     # interior
-    # TODO: Try counter current
-    interior = geo.interior_bc(outvar_sympy={'gravity_segregation': 0},
-                               bounds={x: (0, L)},
-                               batch_size_per_area=10000,
-                               lambda_sympy={'lambda_gravity_segregation': geo.sdf},
-                               param_ranges=time_range)
+    interior = geo.interior_bc(
+      outvar_sympy={'gravity_segregation_o': 0, 'gravity_segregation': 0},
+      bounds={x: (0, L)},
+      batch_size_per_area=10000,
+      lambda_sympy={'lambda_gravity_segregation_o': geo.sdf,
+                    'lambda_gravity_segregation': geo.sdf},
+      param_ranges=time_range)
     self.add(interior, name="Interior")
 
 
@@ -120,6 +120,7 @@ class GravitySegregationSolver(Solver):
   def __init__(self, **config):
     super(GravitySegregationSolver, self).__init__(**config)
 
+    # TODO: Remove weighting
     self.equations = (
       GravitySegregationWeighted(sw='sw', perm=1, dim=1, time=True).make_node(stop_gradients=['grad_magnitude_sw'])
       + GradMagSW('sw').make_node())
