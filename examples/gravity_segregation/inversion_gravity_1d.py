@@ -22,7 +22,7 @@ geo = Line1D(0, L)
 
 # define sympy varaibles to parametize domain curves
 t_symbol = Symbol('t')
-time_length = 5.0
+time_length = 3.0
 time_range = {t_symbol: (0, time_length)}
 
 
@@ -52,17 +52,19 @@ class GravitySegregationTrain(TrainDomain):
     self.add(BC, name="BC")"""
     # Top wall
     # TODO: try 2 phase boundary
-    topWall = geo.boundary_bc(outvar_sympy={'closed_boundary_o': 0},
+    topWall = geo.boundary_bc(outvar_sympy={'closed_boundary_o': 0, 'closed_boundary_w': 0},
                               batch_size_per_area=2000,
-                              lambda_sympy={'lambda_closed_boundary_o': 1.0},
+                              lambda_sympy={'lambda_closed_boundary_o': 1.0,
+                                            'lambda_closed_boundary_w': 1.0},
                               param_ranges=time_range,
                               criteria=x >= L)
     self.add(topWall, name="TopWall")
 
     # bottom wall
-    bottomWall = geo.boundary_bc(outvar_sympy={'closed_boundary_w': 0},
+    bottomWall = geo.boundary_bc(outvar_sympy={'closed_boundary_w': 0, 'closed_boundary_o': 0},
                                  batch_size_per_area=2000,
-                                 lambda_sympy={'lambda_closed_boundary_w': 1.0},
+                                 lambda_sympy={'lambda_closed_boundary_w': 1.0,
+                                               'lambda_closed_boundary_o': 1.0},
                                  param_ranges=time_range,
                                  criteria=x <= 0)
     self.add(bottomWall, name="BottomWall")
@@ -78,51 +80,51 @@ class GravitySegregationTrain(TrainDomain):
     self.add(interior, name="Interior")
 
 
-# class GravitySegregationVal(ValidationDomain):
-#   def __init__(self, **config):
-#     super(GravitySegregationVal, self).__init__()
-#
-#     # make validation data
-#     deltaT = 0.01
-#     deltaX = 0.01 / 2.56
-#     x = np.arange(0, L, deltaX)
-#     t = np.arange(0, L, deltaT)
-#     X, T = np.meshgrid(x, t, indexing='ij')
-#     X = np.expand_dims(X.flatten(), axis=-1)
-#     T = np.expand_dims(T.flatten(), axis=-1)
-#     w = sio.loadmat('./buckley/Buckley_x_Swc0_Sor_0_M_2.mat')
-#     u = np.expand_dims(w['usol'].flatten(), axis=-1)
-#     invar_numpy = {'x': X, 't': T}
-#     # outvar_numpy = {'u': u, 'buckley_equation': np.zeros_like(u)}
-#     outvar_numpy = {'u': u}
-#     val = Validation.from_numpy(invar_numpy, outvar_numpy)
-#     self.add(val, name='Val')
-
-
-class GravitySegregationInference(InferenceDomain):
+class GravitySegregationVal(ValidationDomain):
   def __init__(self, **config):
-    super(GravitySegregationInference, self).__init__()
-    x = Symbol('x')
-    # inf data
-    for i, specific_t in enumerate(np.linspace(0, time_length, 40)):
-      interior = geo.sample_interior(5000,
-                                     bounds={x: (0, L)},
-                                     param_ranges={t_symbol: float(specific_t)})
-      inf = Inference(interior, ['sw'])
-      self.add(inf, "Inference_" + str(i).zfill(4))
+    super(GravitySegregationVal, self).__init__()
+
+    # make validation data
+    deltaT = time_length * 0.01
+    deltaX = 0.01 / 2.56
+    x = np.arange(0, L, deltaX)
+    t = np.arange(0, L, deltaT)
+    X, T = np.meshgrid(x, t, indexing='ij')
+    X = np.expand_dims(X.flatten(), axis=-1)
+    T = np.expand_dims(T.flatten(), axis=-1)
+    w = sio.loadmat('./reference/gravity_inversion_kz_1_T3.mat')
+    sw = np.expand_dims(w['usol'].flatten(), axis=-1)
+    invar_numpy = {'x': X, 't': T}
+    outvar_numpy = {'sw': sw, 'gravity_segregation': np.zeros_like(sw)}
+    val = Validation.from_numpy(invar_numpy, outvar_numpy)
+    self.add(val, name='Val')
+
+
+# class GravitySegregationInference(InferenceDomain):
+#   def __init__(self, **config):
+#     super(GravitySegregationInference, self).__init__()
+#     x = Symbol('x')
+#     # inf data
+#     for i, specific_t in enumerate(np.linspace(0, time_length, 40)):
+#       interior = geo.sample_interior(5000,
+#                                      bounds={x: (0, L)},
+#                                      param_ranges={t_symbol: float(specific_t)})
+#       inf = Inference(interior, ['sw'])
+#       self.add(inf, "Inference_" + str(i).zfill(4))
 
 
 # Define neural network
 class GravitySegregationSolver(Solver):
   train_domain = GravitySegregationTrain
-  inference_domain = GravitySegregationInference
+  # inference_domain = GravitySegregationInference
+  val_domain = GravitySegregationVal
 
   def __init__(self, **config):
     super(GravitySegregationSolver, self).__init__(**config)
 
     # TODO: Remove weighting
     self.equations = (
-      GravitySegregationWeighted(sw='sw', perm=1, dim=1, time=True).make_node(stop_gradients=['grad_magnitude_sw'])
+      GravitySegregationWeighted(sw='sw', perm=0.1, dim=1, time=True).make_node(stop_gradients=['grad_magnitude_sw'])
       + GradMagSW('sw').make_node())
     gravity_segregation_net = self.arch.make_node(name='gravity_segregation_net',
                                                   inputs=['x', 't'],
@@ -132,7 +134,7 @@ class GravitySegregationSolver(Solver):
   @classmethod  # Explain This
   def update_defaults(cls, defaults):
     defaults.update({
-      'network_dir': './checkpoint_gravity_1d/inversion_{}'.format(int(time.time())),
+      'network_dir': './checkpoint_gravity_1d/inversion_val_{}'.format(int(time.time())),
       'max_steps': 70000,
       'decay_steps': 500,
       'start_lr': 3e-4,

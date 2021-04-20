@@ -393,8 +393,8 @@ class GravitySegregationWeighted(PDES):
     rhoo = 40  # Oil
     rhow = 62.238  # Water
     # Viscosities
-    muo = 5#2e-4  # lb/ft-s
-    muw = 1#6e-6
+    muo = 5#2e-4  # 5 lb/ft-s
+    muw = 1#6e-6# 1
     conv = 9.1688e-8  # md to ft2
     fw = lambda S: krw(S) * kro(S) / (kro(S) + krw(S) * muo / muw)
     vw = g * (rhoo - rhow) / (phi * muw) * perm * conv * fw(sw)
