@@ -22,7 +22,7 @@ geo = Rectangle((0, 0),
 x, y = Symbol('x'), Symbol('y')
 
 # define time domain
-time_length = 0.20
+time_length = 0.01
 t_symbol = Symbol('t')
 time_range = {t_symbol: (0, time_length)}
 
@@ -114,12 +114,12 @@ class ReservoirSolver(Solver):
   def __init__(self, **config):
     super(ReservoirSolver, self).__init__(**config)
 
-    self.arch.set_frequencies(('full', [i/2 for i in range(0, 10)]))
+    self.arch.set_frequencies([i/2 for i in range(0, 10)])
 
     self.equations = (
       TwoPhaseFlow(sw='z', perm=1, dim=2, time=True).make_node()
       #+ [Node.from_sympy(t_symbol**2*Symbol('z_star') + 0.25*exp(-200 * ((x - 0.8) ** 2 + (y - 0.5) ** 2)), 'z')]
-      + [Node.from_sympy(t_symbol*Symbol('z_star') + 0.25*exp(-200 * ((x - 0.5) ** 2 + (y - 0.5) ** 2)), 'z')]
+      + [Node.from_sympy(t_symbol*Symbol('z_star') + exp(-200 * ((x - 0.5) ** 2 + (y - 0.5) ** 2)), 'z')]
     )
     # + OpenBoundary(sw='z', perm='perm', dim=2, time=True).make_node(stop_gradients=['perm', 'perm__x', 'perm__y'])
 
@@ -134,7 +134,7 @@ class ReservoirSolver(Solver):
   @classmethod  # Explain This
   def update_defaults(cls, defaults):
     defaults.update({
-      'network_dir': './checkpoint_gravity_2d_try_23/',
+      'network_dir': './checkpoint_gravity_2d_try_40/',
       'max_steps': 400000,
       'decay_steps': 4000,
       'start_lr': 3e-4,
