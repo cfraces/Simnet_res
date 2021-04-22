@@ -15,7 +15,7 @@ import time
 from rnn import GRUArch
 
 # params for domain
-L = float(15)
+L = float(16)
 
 # define geometry
 geo = Line1D(0, L)
@@ -23,7 +23,7 @@ geo = Line1D(0, L)
 # define sympy varaibles to parametize domain curves
 t_symbol = Symbol('t')
 # TODO: Try seq_length=1
-seq_length = 3
+seq_length = 6
 time_length = seq_length * L
 time_range = {t_symbol: (0, time_length)}
 

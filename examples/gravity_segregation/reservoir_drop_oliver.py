@@ -134,7 +134,7 @@ class ReservoirSolver(Solver):
   @classmethod  # Explain This
   def update_defaults(cls, defaults):
     defaults.update({
-      'network_dir': './checkpoint_gravity_2d_try_40/',
+      'network_dir': './checkpoint_gravity_2d/drop_o_{}'.format(int(time.time())),
       'max_steps': 400000,
       'decay_steps': 4000,
       'start_lr': 3e-4,

@@ -393,8 +393,8 @@ class GravitySegregationWeighted(PDES):
     rhoo = 40  # Oil
     rhow = 62.238  # Water
     # Viscosities
-    muo = 2e-4  # lb/ft-s
-    muw = 6e-6
+    muo = 2e-4  # 5 lb/ft-s
+    muw = 6e-6# 1
     conv = 9.1688e-8  # md to ft2
     fw = lambda S: krw(S) * kro(S) / (kro(S) + krw(S) * muo / muw)
     vw = g * (rhoo - rhow) / (phi * muw) * perm * conv * fw(sw)
@@ -405,6 +405,9 @@ class GravitySegregationWeighted(PDES):
     self.equations = {}
     self.equations['gravity_segregation'] = ((sw.diff(t, 1)
                                               + vw.diff(x, 1))
+                                             / (Function(self.weighting)(*input_variables) + 1))
+    self.equations['gravity_segregation_o'] = ((-sw.diff(t, 1)
+                                              + vo.diff(x, 1))
                                              / (Function(self.weighting)(*input_variables) + 1))
     self.equations['closed_boundary_w'] = vw
     self.equations['closed_boundary_o'] = vo
