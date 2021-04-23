@@ -118,7 +118,8 @@ class BuckleyInference(InferenceDomain):
       velocity = float(velocity)
       sampled_interior = geo.sample_interior(1024,
                                              bounds={x: (0, L)},
-                                             param_ranges={vel: velocity})
+                                             param_ranges={t_symbol: (0, tf),
+                                                           vel: velocity})
       interior = Inference(sampled_interior, ['u'])
       self.add(interior, name="Inference_" + str(i).zfill(5))
 
