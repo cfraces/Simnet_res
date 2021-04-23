@@ -2,7 +2,7 @@
 <project version="4">
   <component name="SshConfigs">
     <configs>
-      <sshConfig host="35.185.233.56" id="34a73268-6cf6-4a70-bafd-6671e548e89c" keyPath="C:\Users\cedric\.ssh\google_compute_engine" port="22" customName="cfraces_stanford_edu" nameFormat="CUSTOM">
+      <sshConfig host="35.185.233.56" id="34a73268-6cf6-4a70-bafd-6671e548e89c" keyPath="$USER_HOME$/.ssh/google_compute_engine" port="22" customName="cfraces_stanford_edu" nameFormat="CUSTOM" username="cfraces_stanford_edu">
         <option name="customName" value="cfraces_stanford_edu" />
       </sshConfig>
     </configs>

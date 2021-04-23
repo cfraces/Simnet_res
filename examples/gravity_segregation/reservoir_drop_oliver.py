@@ -22,7 +22,7 @@ geo = Rectangle((0, 0),
 x, y = Symbol('x'), Symbol('y')
 
 # define time domain
-time_length = 0.01
+time_length = 1.0
 t_symbol = Symbol('t')
 time_range = {t_symbol: (0, time_length)}
 
@@ -97,7 +97,7 @@ class Reservoirnference(InferenceDomain):
                                  indexing='ij')
     mesh_x = np.expand_dims(mesh_x.flatten(), axis=-1)
     mesh_y = np.expand_dims(mesh_y.flatten(), axis=-1)
-    for i, specific_t in enumerate(np.linspace(0, time_length, 20)):
+    for i, specific_t in enumerate(np.linspace(0, time_length, 40)):
       interior = {'x': mesh_x,
                   'y': mesh_y,
                   't': np.full_like(mesh_x, specific_t)}

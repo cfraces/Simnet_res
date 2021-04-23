@@ -85,8 +85,8 @@ class GravitySegregationVal(ValidationDomain):
     super(GravitySegregationVal, self).__init__()
 
     # make validation data
-    deltaT = time_length * 0.01
-    deltaX = 0.01 / 2.56
+    deltaT = 0.005
+    deltaX = L * 0.01 / 2.56
     x = np.arange(0, L, deltaX)
     t = np.arange(0, time_length, deltaT)
     X, T = np.meshgrid(x, t, indexing='ij')
@@ -124,7 +124,7 @@ class GravitySegregationSolver(Solver):
 
     # TODO: Remove weighting
     self.equations = (
-      GravitySegregationWeighted(sw='sw', perm=0.1, dim=1, time=True).make_node(stop_gradients=['grad_magnitude_sw'])
+      GravitySegregationWeighted(sw='sw', perm=1, dim=1, time=True).make_node(stop_gradients=['grad_magnitude_sw'])
       + GradMagSW('sw').make_node())
     gravity_segregation_net = self.arch.make_node(name='gravity_segregation_net',
                                                   inputs=['x', 't'],
