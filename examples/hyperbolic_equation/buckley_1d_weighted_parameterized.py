@@ -8,10 +8,9 @@ from simnet.solver import Solver
 from simnet.dataset import TrainDomain, ValidationDomain, InferenceDomain
 from simnet.data import Validation, Inference
 from simnet.sympy_utils.geometry_1d import Line1D
-from hyperbolic_equation import BuckleyEquationParam
+from hyperbolic_equation import BuckleyEquationWeightedParam, GradMag
 from simnet.controller import SimNetController
 import scipy.io as sio
-from scipy.stats import truncnorm
 import time
 
 # params for domain
@@ -37,33 +36,29 @@ X = np.expand_dims(X.flatten(), axis=-1)
 T = np.expand_dims(T.flatten(), axis=-1)
 
 # v1
-ref_buckley_v_1 = sio.loadmat('./buckley/Buckley_M_2_vel_1.mat')
+ref_buckley_v_1 = sio.loadmat('./buckley/Buckley_resid_0_vel_1.mat')
 u1 = np.expand_dims(ref_buckley_v_1['usol'].flatten(), axis=-1)
 outvar_v_1_numpy = {'u': u1}
 ud_1 = np.zeros_like(X) + 1.0
 invar_numpy_v1 = {'x': X, 't': T, 'ud': ud_1}
 
-# v50
-ref_buckley_v_50 = sio.loadmat('./buckley/Buckley_M_2_vel_0.5.mat')
-u50 = np.expand_dims(ref_buckley_v_50['usol'].flatten(), axis=-1)
-outvar_v_50_numpy = {'u': u50}
-ud_50 = np.zeros_like(X) + 0.5
-invar_numpy_v50 = {'x': X, 't': T, 'ud': ud_50}
+# v875
+ref_buckley_v_875 = sio.loadmat('./buckley/Buckley_resid_0_vel_0.875.mat')
+u875 = np.expand_dims(ref_buckley_v_875['usol'].flatten(), axis=-1)
+outvar_v_875_numpy = {'u': u875}
+ud_875 = np.zeros_like(X) + 0.875
+invar_numpy_v875 = {'x': X, 't': T, 'ud': ud_875}
 
-# v2
-ref_buckley_v_2 = sio.loadmat('./buckley/Buckley_M_2_vel_2.mat')
-u2 = np.expand_dims(ref_buckley_v_2['usol'].flatten(), axis=-1)
-outvar_v_2_numpy = {'u': u2}
-ud_2 = np.zeros_like(X) + 2.0
-invar_numpy_v2 = {'x': X, 't': T, 'ud': ud_2}
+# v75
+ref_buckley_v_75 = sio.loadmat('./buckley/Buckley_resid_0_vel_0.75.mat')
+u75 = np.expand_dims(ref_buckley_v_75['usol'].flatten(), axis=-1)
+outvar_v_75_numpy = {'u': u75}
+ud_75 = np.zeros_like(X) + 0.75
+invar_numpy_v75 = {'x': X, 't': T, 'ud': ud_75}
 
 vel = Symbol('ud')
-vel_ranges = (0.5, 2.0)
+vel_ranges = (0.75, 1.0)
 param_ranges = {vel: vel_ranges, t_symbol: (0, tf)}
-
-
-def get_truncated_normal(mean=0, sd=1, low=0, upp=10):
-  return truncnorm((low - mean) / sd, (upp - mean) / sd, loc=mean, scale=sd)
 
 
 class BuckleyTrain(TrainDomain):
@@ -106,25 +101,22 @@ class BuckleyVal(ValidationDomain):
     val_v1 = Validation.from_numpy(invar_numpy_v1, outvar_v_1_numpy)
     self.add(val_v1, name='Val_v1')
 
-    # u .50
-    val_v50 = Validation.from_numpy(invar_numpy_v50, outvar_v_50_numpy)
-    self.add(val_v50, name='Val_v50')
+    # u 875
+    val_v875 = Validation.from_numpy(invar_numpy_v875, outvar_v_875_numpy)
+    self.add(val_v875, name='Val_v875')
 
-    # u 2
-    val_v2 = Validation.from_numpy(invar_numpy_v2, outvar_v_2_numpy)
-    self.add(val_v2, name='Val_v2')
+    # u 75
+    val_v75 = Validation.from_numpy(invar_numpy_v75, outvar_v_75_numpy)
+    self.add(val_v75, name='Val_v75')
 
 
 class BuckleyInference(InferenceDomain):
   def __init__(self, **config):
     super(BuckleyInference, self).__init__()
     # save entire domain
-    # Normal distribution
-    sample_vel = get_truncated_normal(mean=1, sd=0.3, low=0.5, upp=2).rvs(300)
-    # for i, velocity in enumerate(np.linspace(vel_ranges[0], vel_ranges[1], 10)):
-    for i, velocity in enumerate(sample_vel):
+    for i, velocity in enumerate(np.linspace(vel_ranges[0], vel_ranges[1], 10)):
       velocity = float(velocity)
-      sampled_interior = geo.sample_interior(1024 * 5,
+      sampled_interior = geo.sample_interior(1024*5,
                                              bounds={x: (0, L)},
                                              param_ranges={t_symbol: (0, tf),
                                                            vel: velocity})
@@ -143,7 +135,9 @@ class BuckleySolver(Solver):
   def __init__(self, **config):
     super(BuckleySolver, self).__init__(**config)
 
-    self.equations = BuckleyEquationParam(u='u', c='ud', dim=1, time=True).make_node()
+    self.equations = (
+        BuckleyEquationWeightedParam(u='u', c='ud', dim=1, time=True).make_node(stop_gradients=['grad_magnitude_u'])
+        + GradMag('u').make_node())
     buckley_net = self.arch.make_node(name='buckley_net',
                                       inputs=['x', 't', 'ud'],
                                       outputs=['u'])
@@ -152,10 +146,11 @@ class BuckleySolver(Solver):
   @classmethod  # Explain This
   def update_defaults(cls, defaults):
     defaults.update({
-      'network_dir': './network_checkpoint/buckley_param_{}'.format(int(time.time())),
-      'max_steps': 90000,
-      'decay_steps': 300,
-      'start_lr': 3e-4,
+      'network_dir': './network_checkpoint/buckley_we_param_{}'.format(int(time.time())),
+      'max_steps': 70000,
+      'decay_steps': 500,
+      'start_lr': 1e-3,
+      'rec_results_cpu': True,
       'amp': True,
       'xla': True
     })

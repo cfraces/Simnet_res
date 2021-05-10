@@ -214,6 +214,52 @@ class BuckleyEquationWeighted(PDES):
                                           / (Function(self.weighting)(*input_variables) + 1))
 
 
+class BuckleyEquationWeightedParam(PDES):
+  name = 'WeightedBuckleyLeverettEquationParam'
+
+  def __init__(self, u='u', c='c', dim=3, time=True, weighting='grad_magnitude_u'):
+    # set params
+    self.u = u
+    self.dim = dim
+    self.time = time
+    self.weighting = weighting
+
+    # coordinates
+    x, y, z = Symbol('x'), Symbol('y'), Symbol('z')
+
+    # time
+    t = Symbol('t')
+
+    # make input variables
+    input_variables = {'x': x, 'y': y, 'z': z, 't': t}
+    if self.dim == 1:
+      input_variables.pop('y')
+      input_variables.pop('z')
+    elif self.dim == 2:
+      input_variables.pop('z')
+    if not self.time:
+      input_variables.pop('t')
+
+    # Scalar function
+    assert type(u) == str, "u needs to be string"
+    u = Function(u)(*input_variables)
+
+    # wave speed coefficient
+    if type(c) is str:
+      c = Function(c)(*input_variables)
+    elif type(c) in [float, int]:
+      c = Number(c)
+
+    # set equations
+    self.equations = {}
+
+    # True f
+    f = (u - c) * (u - c) / ((u - c) ** 2 + (1 - u) * (1 - u) / 2)
+
+    self.equations['buckley_equation_param'] = ((u.diff(t) + c * f.diff(x))
+                                          / (Function(self.weighting)(*input_variables) + 1))
+
+
 class GradMag(PDES):
   name = 'GradMag'
 

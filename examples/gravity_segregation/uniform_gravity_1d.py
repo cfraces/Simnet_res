@@ -120,7 +120,7 @@ class GravitySegregationSolver(Solver):
     super(GravitySegregationSolver, self).__init__(**config)
 
     self.equations = (
-      GravitySegregationWeighted(sw='sw', perm=1, dim=1, time=True).make_node(stop_gradients=['grad_magnitude_sw'])
+      GravitySegregationWeighted(sw='sw', perm=0.1, dim=1, time=True).make_node(stop_gradients=['grad_magnitude_sw'])
       + GradMagSW('sw').make_node())
     gravity_segregation_net = self.arch.make_node(name='gravity_segregation_net',
                                                   inputs=['x', 't'],
