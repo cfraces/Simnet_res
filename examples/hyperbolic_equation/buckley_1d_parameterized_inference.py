@@ -36,26 +36,40 @@ X, T = np.meshgrid(xg, tg)
 X = np.expand_dims(X.flatten(), axis=-1)
 T = np.expand_dims(T.flatten(), axis=-1)
 
+# v10p
+# ref_buckley_v_10p = sio.loadmat('./buckley/Buckley_M_2_vel_0.1.mat')
+# u10p = np.expand_dims(ref_buckley_v_10p['usol'].flatten(), axis=-1)
+# outvar_v_10p_numpy = {'u': u10p}
+# ud_10p = np.zeros_like(X) + 0.1
+# invar_numpy_v10p = {'x': X, 't': T, 'ud': ud_10p}
+
 # v1
-ref_buckley_v_1 = sio.loadmat('./buckley/Buckley_M_2_vel_1.mat')
+ref_buckley_v_1 = sio.loadmat('./buckley/Buckley_swc_100_vel_1.mat')
 u1 = np.expand_dims(ref_buckley_v_1['usol'].flatten(), axis=-1)
 outvar_v_1_numpy = {'u': u1}
 ud_1 = np.zeros_like(X) + 1.0
 invar_numpy_v1 = {'x': X, 't': T, 'ud': ud_1}
 
 # v50
-ref_buckley_v_50 = sio.loadmat('./buckley/Buckley_M_2_vel_0.5.mat')
+ref_buckley_v_50 = sio.loadmat('./buckley/Buckley_swc_100_vel_0.5.mat')
 u50 = np.expand_dims(ref_buckley_v_50['usol'].flatten(), axis=-1)
 outvar_v_50_numpy = {'u': u50}
 ud_50 = np.zeros_like(X) + 0.5
 invar_numpy_v50 = {'x': X, 't': T, 'ud': ud_50}
 
 # v2
-ref_buckley_v_2 = sio.loadmat('./buckley/Buckley_M_2_vel_2.mat')
+ref_buckley_v_2 = sio.loadmat('./buckley/Buckley_swc_100_vel_2.mat')
 u2 = np.expand_dims(ref_buckley_v_2['usol'].flatten(), axis=-1)
 outvar_v_2_numpy = {'u': u2}
 ud_2 = np.zeros_like(X) + 2.0
 invar_numpy_v2 = {'x': X, 't': T, 'ud': ud_2}
+
+# v10
+# ref_buckley_v_10 = sio.loadmat('./buckley/Buckley_M_2_vel_10.mat')
+# u10 = np.expand_dims(ref_buckley_v_10['usol'].flatten(), axis=-1)
+# outvar_v_10_numpy = {'u': u10}
+# ud_10 = np.zeros_like(X) + 10.0
+# invar_numpy_v10 = {'x': X, 't': T, 'ud': ud_10}
 
 vel = Symbol('ud')
 vel_ranges = (0.5, 2.0)
@@ -102,6 +116,10 @@ class BuckleyVal(ValidationDomain):
   def __init__(self, **config):
     super(BuckleyVal, self).__init__()
 
+    # u 10p
+    # val_v10p = Validation.from_numpy(invar_numpy_v10p, outvar_v_10p_numpy)
+    # self.add(val_v10p, name='Val_v10p')
+
     # u 1
     val_v1 = Validation.from_numpy(invar_numpy_v1, outvar_v_1_numpy)
     self.add(val_v1, name='Val_v1')
@@ -114,13 +132,17 @@ class BuckleyVal(ValidationDomain):
     val_v2 = Validation.from_numpy(invar_numpy_v2, outvar_v_2_numpy)
     self.add(val_v2, name='Val_v2')
 
+    # u 10
+    # val_v10 = Validation.from_numpy(invar_numpy_v10, outvar_v_10_numpy)
+    # self.add(val_v10, name='Val_v10')
+
 
 class BuckleyInference(InferenceDomain):
   def __init__(self, **config):
     super(BuckleyInference, self).__init__()
     # save entire domain
     # Normal distribution
-    sample_vel = get_truncated_normal(mean=1, sd=0.3, low=0.5, upp=2).rvs(300)
+    sample_vel = get_truncated_normal(mean=1, sd=0.3, low=0.5, upp=2).rvs(1000)
     # for i, velocity in enumerate(np.linspace(vel_ranges[0], vel_ranges[1], 10)):
     for i, velocity in enumerate(sample_vel):
       velocity = float(velocity)
@@ -151,13 +173,13 @@ class BuckleySolver(Solver):
 
   @classmethod  # Explain This
   def update_defaults(cls, defaults):
+    # N(1, 0.3, 0.5,2)-> buckley_param_1619474515
     defaults.update({
       'network_dir': './network_checkpoint/buckley_param_{}'.format(int(time.time())),
-      'max_steps': 90000,
-      'decay_steps': 300,
-      'start_lr': 3e-4,
-      'amp': True,
-      'xla': True
+      'initialize_network_dir': './network_checkpoint/buckley_param_1624420123',
+      'rec_results_cpu': True,
+      'rec_results_freq': 1,
+      'max_steps': 1
     })
 
 
