@@ -75,9 +75,18 @@ class BuckleyEquation(PDES):
     self.equations = {}
 
     # Piecewise f
+    swc = 0.1
+    sor = 0.05
+    sinit = 0.15
+    M = 2
+    tangent = [0.568821882188219, 0.751580500446855]
+
+    f = Max(-(tangent[1] / (tangent[0] - sinit) * (u - sinit)) * (Heaviside(u - tangent[0]) - 1) + Heaviside(
+      u - tangent[0]) * (u - swc) ** 2 / ((u - swc) ** 2 + ((1 - u - sor) ** 2) / M), 0)
+
     # f = Max(-(1.7075*u - 0.3415)*(Heaviside(u - 0.6597) - 1) + 2*(u - 0.2)**2*Heaviside(u - 0.6597)/(2*(u - 0.2)**2 + (u - 1)**2), 0)
-    f = Max(-(1.366025403514163 * u) * (Heaviside(u - 0.577357735773577) - 1)
-            + 2 * (u ** 2) * Heaviside(u - 0.577357735773577) / (2 * (u) ** 2 + (u - 1) ** 2), 0)
+    # f = Max(-(1.366025403514163 * u) * (Heaviside(u - 0.577357735773577) - 1)
+    #         + 2 * (u ** 2) * Heaviside(u - 0.577357735773577) / (2 * (u) ** 2 + (u - 1) ** 2), 0)
 
     # True f
     # f = (u - c) * (u - c) / ((u - c) ** 2 + (1 - u) * (1 - u) / 2)
@@ -155,12 +164,24 @@ class BuckleyEquationParam(PDES):
     self.equations = {}
 
     # Piecewise f
-    # f = Max(-(1.7075*u - 0.3415)*(Heaviside(u - 0.6597) - 1) + 2*(u - 0.2)**2*Heaviside(u - 0.6597)/(2*(u - 0.2)**2 + (u - 1)**2), 0)
-    f = Max(-(1.366025403514163 * u) * (Heaviside(u - 0.577357735773577) - 1)
-            + 2 * (u ** 2) * Heaviside(u - 0.577357735773577) / (2 * (u) ** 2 + (u - 1) ** 2), 0)
+    swc = 0.1
+    sor = 0.05
+    sinit = 0.15
+    M = 2
+    tangent = [0.568821882188219, 0.751580500446855]
+
+    f = Max(-(tangent[1] / (tangent[0] - sinit) * (u - sinit)) * (Heaviside(u - tangent[0]) - 1) + Heaviside(
+      u - tangent[0]) * (u - swc) ** 2 / ((u - swc) ** 2 + ((1 - u - sor) ** 2) / M), 0)
+
+    # f = Max(-(1.7075*u - 0.3415)*(Heaviside(u - 0.6597) - 1) + 2*(u - 0.2)**2*Heaviside(u - 0.6597)/(2*(u - 0.2)**2
+    # + (u - 1)**2), 0)
+
+    # f = Max(-(1.366025403514163 * u) * (Heaviside(u - 0.577357735773577) - 1)
+    #         + 2 * (u ** 2) * Heaviside(u - 0.577357735773577) / (2 * (u) ** 2 + (u - 1) ** 2), 0)
 
     # True f
     # f = (u - c) * (u - c) / ((u - c) ** 2 + (1 - u) * (1 - u) / 2)
+    # f1 = (s - swc) ** 2 / ((s - swc) ** 2 + (1 - s - sor) ** 2 / M)
 
     self.equations['buckley_equation_param'] = (u.diff(t)
                                                 + c * f.diff(x).replace(DiracDelta, lambda x: 0)
@@ -211,6 +232,52 @@ class BuckleyEquationWeighted(PDES):
     f = (u - c) * (u - c) / ((u - c) ** 2 + (1 - u) * (1 - u) / 2)
 
     self.equations['buckley_equation'] = ((u.diff(t) + f.diff(x))
+                                          / (Function(self.weighting)(*input_variables) + 1))
+
+
+class BuckleyEquationWeightedParam(PDES):
+  name = 'WeightedBuckleyLeverettEquationParam'
+
+  def __init__(self, u='u', c='c', dim=3, time=True, weighting='grad_magnitude_u'):
+    # set params
+    self.u = u
+    self.dim = dim
+    self.time = time
+    self.weighting = weighting
+
+    # coordinates
+    x, y, z = Symbol('x'), Symbol('y'), Symbol('z')
+
+    # time
+    t = Symbol('t')
+
+    # make input variables
+    input_variables = {'x': x, 'y': y, 'z': z, 't': t}
+    if self.dim == 1:
+      input_variables.pop('y')
+      input_variables.pop('z')
+    elif self.dim == 2:
+      input_variables.pop('z')
+    if not self.time:
+      input_variables.pop('t')
+
+    # Scalar function
+    assert type(u) == str, "u needs to be string"
+    u = Function(u)(*input_variables)
+
+    # wave speed coefficient
+    if type(c) is str:
+      c = Function(c)(*input_variables)
+    elif type(c) in [float, int]:
+      c = Number(c)
+
+    # set equations
+    self.equations = {}
+
+    # True f
+    f = (u - c) * (u - c) / ((u - c) ** 2 + (1 - u) * (1 - u) / 2)
+
+    self.equations['buckley_equation_param'] = ((u.diff(t) + c * f.diff(x))
                                           / (Function(self.weighting)(*input_variables) + 1))
 
 

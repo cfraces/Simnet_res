@@ -401,13 +401,17 @@ class GravitySegregationWeighted(PDES):
     # Oil phase
     fo = lambda S: kro(S) * krw(S) / (krw(S) + kro(S) * muw / muo)
     vo = g * (rhow - rhoo) * perm * conv * fo(sw) / (muo * phi)
+    # diffusivity
+    nu = 3e-3
     # set equations
     self.equations = {}
     self.equations['gravity_segregation'] = ((sw.diff(t, 1)
-                                              + vw.diff(x, 1))
+                                              + vw.diff(x, 1)
+                                              - nu * (sw.diff(x)).diff(x))
                                              / (Function(self.weighting)(*input_variables) + 1))
     self.equations['gravity_segregation_o'] = ((-sw.diff(t, 1)
-                                              + vo.diff(x, 1))
+                                              + vo.diff(x, 1)
+                                                + nu * (sw.diff(x)).diff(x))
                                              / (Function(self.weighting)(*input_variables) + 1))
     self.equations['closed_boundary_w'] = vw
     self.equations['closed_boundary_o'] = vo

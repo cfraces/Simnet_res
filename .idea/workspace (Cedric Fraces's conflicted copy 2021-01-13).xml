@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="BranchesTreeState">
+    <expand>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="LOCAL_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="REMOTE_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="REMOTE_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="GROUP_NODE:origin" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+    </expand>
+    <select />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="89faa0b9-fcb3-4816-85d6-d88cae9077a6" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/examples/reservoir/segregation_2d_variable_perm.py" beforeDir="false" afterPath="$PROJECT_DIR$/examples/reservoir/segregation_2d_variable_perm.py" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="JupyterTrust" id="762408a9-56e6-4ed3-adee-3d9d684e9dae" />
+  <component name="ProjectId" id="1k7YHwELs4QPfkZw7QVexan9rUi" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="true" />
+    <property name="WebServerToolWindowPanel.toolwindow.highlight.mappings" value="true" />
+    <property name="WebServerToolWindowPanel.toolwindow.highlight.symlinks" value="true" />
+    <property name="WebServerToolWindowPanel.toolwindow.show.date" value="false" />
+    <property name="WebServerToolWindowPanel.toolwindow.show.permissions" value="false" />
+    <property name="WebServerToolWindowPanel.toolwindow.show.size" value="false" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/examples/reservoir" />
+    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
+  </component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\Tenokonda Ltd Dropbox\Cedric Fraces\Projects\Simnet02\examples\reservoir" />
+      <recent name="D:\Tenokonda Ltd Dropbox\Cedric Fraces\Projects\Simnet02\examples\hyperbolic_equation\checkpoint_linear" />
+      <recent name="D:\Tenokonda Ltd Dropbox\Cedric Fraces\Projects\Simnet02\examples\hyperbolic_equation\checkpoint_batch" />
+    </key>
+  </component>
+  <component name="RunManager">
+    <configuration default="true" type="PythonConfigurationType" factoryName="Python">
+      <module name="Simnet02" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="true" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="make_animation" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="Simnet02" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/examples" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/examples/make_animation.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="true" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Python.make_animation" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SpellCheckerSettings" BundledDictionaries="0" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" Dictionaries="0" CorrectionsLimit="5" DefaultDictionary="application-level" UseSingleDictionary="true" />
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="89faa0b9-fcb3-4816-85d6-d88cae9077a6" name="Default Changelist" comment="" />
+      <created>1605053012651</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1605053012651</updated>
+      <workItem from="1605053013715" duration="7095000" />
+      <workItem from="1605135418354" duration="1787000" />
+      <workItem from="1605288552127" duration="2993000" />
+      <workItem from="1605980708214" duration="109233000" />
+      <workItem from="1607559086263" duration="640000" />
+      <workItem from="1608015437424" duration="1414000" />
+      <workItem from="1609786999706" duration="1895000" />
+      <workItem from="1609886935159" duration="3746000" />
+    </task>
+    <task id="LOCAL-00001" summary="weighted approach to gravity segregation case">
+      <created>1605068665469</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1605068665469</updated>
+    </task>
+    <task id="LOCAL-00002" summary="Set initial condition at x==0">
+      <created>1605069107714</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1605069107714</updated>
+    </task>
+    <task id="LOCAL-00003" summary="Implementation Gravity segregation case">
+      <created>1606117510136</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1606117510136</updated>
+    </task>
+    <task id="LOCAL-00004" summary="2d gravity segregation cases">
+      <created>1606863759665</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1606863759665</updated>
+    </task>
+    <task id="LOCAL-00005" summary="2d gravity segregation cases modifications of stop_gradient">
+      <created>1607284228877</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1607284228877</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="1" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State>
+              <option name="COLUMN_ORDER" />
+            </State>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <ignored-roots>
+      <path value="$PROJECT_DIR$" />
+    </ignored-roots>
+    <MESSAGE value="weighted approach to gravity segregation case" />
+    <MESSAGE value="Set initial condition at x==0" />
+    <MESSAGE value="Implementation Gravity segregation case" />
+    <MESSAGE value="2d gravity segregation cases" />
+    <MESSAGE value="2d gravity segregation cases modifications of stop_gradient" />
+    <option name="LAST_COMMIT_MESSAGE" value="2d gravity segregation cases modifications of stop_gradient" />
+  </component>
+  <component name="WindowStateProjectService">
+    <state x="1512" y="438" key="#Deployment" timestamp="1608013557950">
+      <screen x="0" y="0" width="3840" height="1560" />
+    </state>
+    <state x="706" y="314" key="#Deployment/0.0.1792.1120@0.0.1792.1120" timestamp="1605487326655" />
+    <state x="1512" y="438" key="#Deployment/0.0.3840.1560/3840.0.2560.1400@0.0.3840.1560" timestamp="1608013557950" />
+    <state x="1512" y="438" key="#Options" timestamp="1605054869041">
+      <screen x="0" y="0" width="3840" height="1560" />
+    </state>
+    <state x="1512" y="438" key="#Options/0.0.3840.1560/3840.0.2560.1400@0.0.3840.1560" timestamp="1605054869041" />
+    <state x="690" y="301" key="#SSH_Configurations" timestamp="1605482818724">
+      <screen x="0" y="0" width="1792" height="1120" />
+    </state>
+    <state x="690" y="301" key="#SSH_Configurations/0.0.1792.1120@0.0.1792.1120" timestamp="1605482818724" />
+    <state x="772" y="403" key="#com.intellij.fileTypes.FileTypeChooser" timestamp="1605482522514">
+      <screen x="0" y="23" width="1792" height="1017" />
+    </state>
+    <state x="1655" y="583" key="#com.intellij.fileTypes.FileTypeChooser/0.0.3840.1560/3840.0.2560.1400@0.0.3840.1560" timestamp="1605135603296" />
+    <state x="772" y="403" key="#com.intellij.fileTypes.FileTypeChooser/0.23.1792.1017@0.23.1792.1017" timestamp="1605482522514" />
+    <state x="1387" y="374" width="963" height="983" key="CommitChangelistDialog2" timestamp="1607284227899">
+      <screen x="0" y="0" width="3840" height="1560" />
+    </state>
+    <state x="1387" y="374" width="963" height="983" key="CommitChangelistDialog2/0.0.3840.1560/3840.0.2560.1400@0.0.3840.1560" timestamp="1607284227899" />
+    <state x="1700" y="534" key="FileChooserDialogImpl" timestamp="1605057228991">
+      <screen x="0" y="0" width="3840" height="1560" />
+    </state>
+    <state x="1700" y="534" key="FileChooserDialogImpl/0.0.3840.1560/3840.0.2560.1400@0.0.3840.1560" timestamp="1605057228991" />
+    <state x="1790" y="673" key="Github.ShareDialog" timestamp="1605057297989">
+      <screen x="0" y="0" width="3840" height="1560" />
+    </state>
+    <state x="1790" y="673" key="Github.ShareDialog/0.0.3840.1560/3840.0.2560.1400@0.0.3840.1560" timestamp="1605057297989" />
+    <state x="1668" y="485" key="Github.UntrackedFilesDialog" timestamp="1605057446459">
+      <screen x="0" y="0" width="3840" height="1560" />
+    </state>
+    <state x="1668" y="485" key="Github.UntrackedFilesDialog/0.0.3840.1560/3840.0.2560.1400@0.0.3840.1560" timestamp="1605057446459" />
+    <state x="1421" y="422" key="SettingsEditor" timestamp="1609787028315">
+      <screen x="0" y="0" width="3840" height="1560" />
+    </state>
+    <state x="1421" y="422" key="SettingsEditor/0.0.3840.1560/3840.0.2560.1400@0.0.3840.1560" timestamp="1609787028315" />
+    <state x="4787" y="379" key="SettingsEditor/0.0.3840.1560/3840.0.2560.1400@3840.0.2560.1400" timestamp="1605550977984" />
+    <state x="1512" y="513" key="Vcs.Push.Dialog.v2" timestamp="1607284232562">
+      <screen x="0" y="0" width="3840" height="1560" />
+    </state>
+    <state x="1512" y="513" key="Vcs.Push.Dialog.v2/0.0.3840.1560/3840.0.2560.1400@0.0.3840.1560" timestamp="1607284232562" />
+    <state x="1729" y="697" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2" timestamp="1606331153861">
+      <screen x="0" y="0" width="3840" height="1560" />
+    </state>
+    <state x="1729" y="697" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2/0.0.3840.1560/3840.0.2560.1400@0.0.3840.1560" timestamp="1606331153861" />
+    <state x="1616" y="512" width="610" height="536" key="find.popup" timestamp="1605724627539">
+      <screen x="0" y="0" width="3840" height="1560" />
+    </state>
+    <state x="1616" y="512" width="610" height="536" key="find.popup/0.0.3840.1560/3840.0.2560.1400@0.0.3840.1560" timestamp="1605724627539" />
+    <state x="1805" y="510" key="ftp.server.browser" timestamp="1605053295887">
+      <screen x="0" y="0" width="3840" height="1560" />
+    </state>
+    <state x="1805" y="510" key="ftp.server.browser/0.0.3840.1560/3840.0.2560.1400@0.0.3840.1560" timestamp="1605053295887" />
+  </component>
+</project>

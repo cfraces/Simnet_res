@@ -5,6 +5,9 @@
       <sshConfig host="35.185.233.56" id="34a73268-6cf6-4a70-bafd-6671e548e89c" keyPath="$USER_HOME$/.ssh/google_compute_engine" port="22" customName="cfraces_stanford_edu" nameFormat="CUSTOM" username="cfraces_stanford_edu">
         <option name="customName" value="cfraces_stanford_edu" />
       </sshConfig>
+      <sshConfig host="35.185.233.56" id="7b037b6e-428e-4dfe-b729-d3f1d852dc28" keyPath="C:\Users\cedric\.ssh\google_compute_engine" port="22" customName="cfraces_stanford_edu" nameFormat="CUSTOM">
+        <option name="customName" value="cfraces_stanford_edu" />
+      </sshConfig>
     </configs>
   </component>
 </project>
