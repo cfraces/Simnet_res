@@ -27,9 +27,6 @@ time_range = {t_symbol: (0, L)}
 # Synpy variable to parametrize random velocities
 # vel_ranges = (0.5, 2.0)
 
-
-
-
 class BuckleyTrain(TrainDomain):
   def __init__(self, **config):
     super(BuckleyTrain, self).__init__()
@@ -43,8 +40,8 @@ class BuckleyTrain(TrainDomain):
                          lambda_sympy={'lambda_u': 1.0,
                                        'lambda_u__t': 1.0},
                          param_ranges={t_symbol: 0.0,
-                                       Symbol('rand_v_1'): (1e-5, 1),
-                                       Symbol('rand_v_2'): (1e-5, 1)})
+                                       Symbol('rand_v_1'): (1e-5, 1.0),
+                                       Symbol('rand_v_2'): (1e-5, 1.0)})
     self.add(IC, name="IC")
 
     # boundary conditions
@@ -63,8 +60,8 @@ class BuckleyTrain(TrainDomain):
                                batch_size_per_area=5000,
                                lambda_sympy={'lambda_buckley_heterogeneous': 1.0},
                                param_ranges={t_symbol: 0.0,
-                                             Symbol('rand_v_1'): (1e-5, 1),
-                                             Symbol('rand_v_2'): (1e-5, 1)})
+                                             Symbol('rand_v_1'): (1e-5, 1.0),
+                                             Symbol('rand_v_2'): (1e-5, 1.0)})
     self.add(interior, name="Interior")
 
 
