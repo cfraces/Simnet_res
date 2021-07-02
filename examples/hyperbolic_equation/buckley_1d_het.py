@@ -17,17 +17,16 @@ import time
 L = float(1.0)
 
 # define geometry
-geo = Line1D(0, L)
+geo = Line1D(0.0, L)
 
 # define sympy variables to parametrize time
 # x = Symbol('x')
 t_symbol = Symbol('t')
 time_range = {t_symbol: (0, L)}
 
+
 # Synpy variable to parametrize random velocities
 # vel_ranges = (0.5, 2.0)
-
-
 
 
 class BuckleyTrain(TrainDomain):
@@ -43,8 +42,8 @@ class BuckleyTrain(TrainDomain):
                          lambda_sympy={'lambda_u': 1.0,
                                        'lambda_u__t': 1.0},
                          param_ranges={t_symbol: 0.0,
-                                       Symbol('rand_v_1'): (1e-5, 1),
-                                       Symbol('rand_v_2'): (1e-5, 1)})
+                                       Symbol('rand_v_1'): (1e-5, 1.0),
+                                       Symbol('rand_v_2'): (1e-5, 1.0)})
     self.add(IC, name="IC")
 
     # boundary conditions
@@ -52,8 +51,8 @@ class BuckleyTrain(TrainDomain):
                          batch_size_per_area=5000,
                          lambda_sympy={'lambda_u': 1.0},
                          param_ranges={t_symbol: 0.0,
-                                       Symbol('rand_v_1'): (1e-5, 1),
-                                       Symbol('rand_v_2'): (1e-5, 1)},
+                                       Symbol('rand_v_1'): (1e-5, 1.0),
+                                       Symbol('rand_v_2'): (1e-5, 1.0)},
                          criteria=x <= 0)
     self.add(BC, name="BC")
 
@@ -63,8 +62,8 @@ class BuckleyTrain(TrainDomain):
                                batch_size_per_area=5000,
                                lambda_sympy={'lambda_buckley_heterogeneous': 1.0},
                                param_ranges={t_symbol: 0.0,
-                                             Symbol('rand_v_1'): (1e-5, 1),
-                                             Symbol('rand_v_2'): (1e-5, 1)})
+                                             Symbol('rand_v_1'): (1e-5, 1.0),
+                                             Symbol('rand_v_2'): (1e-5, 1.0)})
     self.add(interior, name="Interior")
 
 
@@ -81,7 +80,7 @@ class BuckleyVal(ValidationDomain):
     T = np.expand_dims(T.flatten(), axis=-1)
     w = sio.loadmat('./buckley/Buckley_Swc0_Sor_0_M_2.mat')
     u = np.expand_dims(w['usol'].flatten(), axis=-1)
-    invar_numpy = {'x': X, 't': T}
+    invar_numpy = {'x': X, 't': T, 'rand_v_1': np.ones_like(X), 'rand_v_2': np.ones_like(X)}
     outvar_numpy = {'u': u}
     val = Validation.from_numpy(invar_numpy, outvar_numpy)
     self.add(val, name='Val')

@@ -160,7 +160,7 @@ class BuckleyHeterogeneous(PDES):
     #   c = Number(c)
     rand_v_1 = Symbol("rand_v_1")
     rand_v_2 = Symbol("rand_v_2")
-    v_d = sqrt(-2 * ln(rand_v_1)) * cos(2 * pi * rand_v_2)
+    v_d = sqrt(-2 * ln(rand_v_1)) * cos(2 * np.pi * rand_v_2)
 
     # set equations
     self.equations = {}
