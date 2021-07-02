@@ -17,7 +17,7 @@ import time
 L = float(1.0)
 
 # define geometry
-geo = Line1D(0.0, L)
+geo = Line1D(0, L)
 
 # define sympy variables to parametrize time
 # x = Symbol('x')
