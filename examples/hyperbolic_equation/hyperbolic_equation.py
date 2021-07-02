@@ -2,7 +2,7 @@
 Reference: https://en.wikipedia.org/wiki/Buckley-Leverett
 """
 
-from sympy import Symbol, Function, Number, tanh, Piecewise, Max, Heaviside, DiracDelta, sqrt
+from sympy import Symbol, Function, Number, tanh, Piecewise, Max, Heaviside, DiracDelta, sqrt, ln, pi, cos
 import numpy as np
 
 from simnet.pdes import PDES
@@ -75,18 +75,17 @@ class BuckleyEquation(PDES):
     self.equations = {}
 
     # Piecewise f
-    swc = 0.1
-    sor = 0.05
-    sinit = 0.15
-    M = 2
-    tangent = [0.568821882188219, 0.751580500446855]
+    # swc = 0.0
+    # sor = 0.
+    # sinit = 0.
+    # M = 2
+    # tangent = [0.568821882188219, 0.751580500446855]
+    #
+    # f = Max(-(tangent[1] / (tangent[0] - sinit) * (u - sinit)) * (Heaviside(u - tangent[0]) - 1) + Heaviside(
+    #   u - tangent[0]) * (u - swc) ** 2 / ((u - swc) ** 2 + ((1 - u - sor) ** 2) / M), 0)
 
-    f = Max(-(tangent[1] / (tangent[0] - sinit) * (u - sinit)) * (Heaviside(u - tangent[0]) - 1) + Heaviside(
-      u - tangent[0]) * (u - swc) ** 2 / ((u - swc) ** 2 + ((1 - u - sor) ** 2) / M), 0)
-
-    # f = Max(-(1.7075*u - 0.3415)*(Heaviside(u - 0.6597) - 1) + 2*(u - 0.2)**2*Heaviside(u - 0.6597)/(2*(u - 0.2)**2 + (u - 1)**2), 0)
-    # f = Max(-(1.366025403514163 * u) * (Heaviside(u - 0.577357735773577) - 1)
-    #         + 2 * (u ** 2) * Heaviside(u - 0.577357735773577) / (2 * (u) ** 2 + (u - 1) ** 2), 0)
+    f = Max(-(1.366025403514163 * u) * (Heaviside(u - 0.577357735773577) - 1)
+            + 2 * (u ** 2) * Heaviside(u - 0.577357735773577) / (2 * (u) ** 2 + (u - 1) ** 2), 0)
 
     # True f
     # f = (u - c) * (u - c) / ((u - c) ** 2 + (1 - u) * (1 - u) / 2)
@@ -95,6 +94,94 @@ class BuckleyEquation(PDES):
                                           + f.diff(x).replace(DiracDelta, lambda x: 0)
                                           + (c * u).diff(y)
                                           + (c * u).diff(z))
+
+
+class BuckleyHeterogeneous(PDES):
+  """
+  Buckley Leverett equation with heterogeneities
+
+  Parameters
+  ==========
+  u : str
+      The dependent variable.
+  c : float, Sympy Symbol/Expr, str
+      Wave speed coefficient. If `c` is a str then it is
+      converted to Sympy Function of form 'c(x,y,z,t)'.
+      If 'c' is a Sympy Symbol or Expression then this
+      is substituted into the equation.
+  dim : int
+      Dimension of the wave equation (1, 2, or 3). Default is 2.
+  time : bool
+      If time-dependent equations or not. Default is True.
+
+  Examples
+  ========
+  >>> we = BuckleyHeterogeneousn(c=0.8, dim=3)
+  >>> we.pprint(preview=False)
+    wave_equation: u__t__t - 0.64*u__x__x - 0.64*u__y__y - 0.64*u__z__z
+    buckley_equation: u__t - 0.8*u__x - 0.8*u__y - 0.8*u__z
+  >>> we = BuckleyHeterogeneousn(c='c', dim=2, time=False)
+  >>> we.pprint(preview=False)
+    buckley_equation: -c*u__x__x - c*u__y - c*c__x*u__x - c*c__y*u__y
+  """
+
+  name = 'BuckleyLeverettHeterogeneous'
+
+  def __init__(self, u='u', dim=3, time=True, eps=1e-2):
+    # set params
+    self.u = u
+    self.dim = dim
+    self.time = time
+
+    # coordinates
+    x, y, z = Symbol('x'), Symbol('y'), Symbol('z')
+
+    # time
+    t = Symbol('t')
+
+    # make input variables
+    input_variables = {'x': x, 'y': y, 'z': z, 't': t}
+    if self.dim == 1:
+      input_variables.pop('y')
+      input_variables.pop('z')
+    elif self.dim == 2:
+      input_variables.pop('z')
+    if not self.time:
+      input_variables.pop('t')
+
+    # Scalar function
+    assert type(u) == str, "u needs to be string"
+    u = Function(u)(*input_variables)
+
+    # wave speed coefficient
+    # if type(rand_v_1) is str:
+    #   c = Function(c)(*input_variables)
+    # elif type(c) in [float, int]:
+    #   c = Number(c)
+    rand_v_1 = Symbol("rand_v_1")
+    rand_v_2 = Symbol("rand_v_2")
+    v_d = sqrt(-2 * ln(rand_v_1)) * cos(2 * pi * rand_v_2)
+
+    # set equations
+    self.equations = {}
+
+    # Piecewise f
+    # swc = 0.0
+    # sor = 0.
+    # sinit = 0.
+    # M = 2
+    # tangent = [0.568821882188219, 0.751580500446855]
+    #
+    # f = Max(-(tangent[1] / (tangent[0] - sinit) * (u - sinit)) * (Heaviside(u - tangent[0]) - 1) + Heaviside(
+    #   u - tangent[0]) * (u - swc) ** 2 / ((u - swc) ** 2 + ((1 - u - sor) ** 2) / M), 0)
+
+    f = Max(-(1.366025403514163 * u) * (Heaviside(u - 0.577357735773577) - 1)
+            + 2 * (u ** 2) * Heaviside(u - 0.577357735773577) / (2 * (u) ** 2 + (u - 1) ** 2), 0)
+
+    # True f
+    # f = (u - c) * (u - c) / ((u - c) ** 2 + (1 - u) * (1 - u) / 2)
+
+    self.equations['buckley_heterogeneous'] = u.diff(t) + v_d * f.diff(x).replace(DiracDelta, lambda x: 0)
 
 
 class BuckleyEquationParam(PDES):
@@ -164,20 +251,20 @@ class BuckleyEquationParam(PDES):
     self.equations = {}
 
     # Piecewise f
-    swc = 0.1
-    sor = 0.05
-    sinit = 0.15
-    M = 2
-    tangent = [0.568821882188219, 0.751580500446855]
-
-    f = Max(-(tangent[1] / (tangent[0] - sinit) * (u - sinit)) * (Heaviside(u - tangent[0]) - 1) + Heaviside(
-      u - tangent[0]) * (u - swc) ** 2 / ((u - swc) ** 2 + ((1 - u - sor) ** 2) / M), 0)
+    # swc = 0.1
+    # sor = 0.05
+    # sinit = 0.15
+    # M = 2
+    # tangent = [0.568821882188219, 0.751580500446855]
+    #
+    # f = Max(-(tangent[1] / (tangent[0] - sinit) * (u - sinit)) * (Heaviside(u - tangent[0]) - 1) + Heaviside(
+    #   u - tangent[0]) * (u - swc) ** 2 / ((u - swc) ** 2 + ((1 - u - sor) ** 2) / M), 0)
 
     # f = Max(-(1.7075*u - 0.3415)*(Heaviside(u - 0.6597) - 1) + 2*(u - 0.2)**2*Heaviside(u - 0.6597)/(2*(u - 0.2)**2
     # + (u - 1)**2), 0)
 
-    # f = Max(-(1.366025403514163 * u) * (Heaviside(u - 0.577357735773577) - 1)
-    #         + 2 * (u ** 2) * Heaviside(u - 0.577357735773577) / (2 * (u) ** 2 + (u - 1) ** 2), 0)
+    f = Max(-(1.366025403514163 * u) * (Heaviside(u - 0.577357735773577) - 1)
+            + 2 * (u ** 2) * Heaviside(u - 0.577357735773577) / (2 * (u) ** 2 + (u - 1) ** 2), 0)
 
     # True f
     # f = (u - c) * (u - c) / ((u - c) ** 2 + (1 - u) * (1 - u) / 2)
@@ -278,7 +365,7 @@ class BuckleyEquationWeightedParam(PDES):
     f = (u - c) * (u - c) / ((u - c) ** 2 + (1 - u) * (1 - u) / 2)
 
     self.equations['buckley_equation_param'] = ((u.diff(t) + c * f.diff(x))
-                                          / (Function(self.weighting)(*input_variables) + 1))
+                                                / (Function(self.weighting)(*input_variables) + 1))
 
 
 class GradMag(PDES):
