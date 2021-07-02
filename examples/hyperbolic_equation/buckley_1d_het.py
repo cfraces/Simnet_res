@@ -14,12 +14,13 @@ import scipy.io as sio
 import time
 
 # params for domain
-L = float(1)
+L = float(1.0)
 
 # define geometry
 geo = Line1D(0, L)
 
 # define sympy variables to parametrize time
+# x = Symbol('x')
 t_symbol = Symbol('t')
 time_range = {t_symbol: (0, L)}
 
@@ -37,7 +38,7 @@ class BuckleyTrain(TrainDomain):
 
     # initial conditions
     IC = geo.interior_bc(outvar_sympy={'u': 0, 'u__t': 0},
-                         bounds={x: (0, L)},
+                         bounds={x: (0.0, L)},
                          batch_size_per_area=5000,
                          lambda_sympy={'lambda_u': 1.0,
                                        'lambda_u__t': 1.0},
@@ -50,16 +51,20 @@ class BuckleyTrain(TrainDomain):
     BC = geo.boundary_bc(outvar_sympy={'u': 1},
                          batch_size_per_area=5000,
                          lambda_sympy={'lambda_u': 1.0},
-                         param_ranges=time_range,
+                         param_ranges={t_symbol: 0.0,
+                                       Symbol('rand_v_1'): (1e-5, 1),
+                                       Symbol('rand_v_2'): (1e-5, 1)},
                          criteria=x <= 0)
     self.add(BC, name="BC")
 
     # interior
     interior = geo.interior_bc(outvar_sympy={'buckley_heterogeneous': 0},
-                               bounds={x: (0, L)},
+                               bounds={x: (0.0, L)},
                                batch_size_per_area=5000,
                                lambda_sympy={'lambda_buckley_heterogeneous': 1.0},
-                               param_ranges=time_range)
+                               param_ranges={t_symbol: 0.0,
+                                             Symbol('rand_v_1'): (1e-5, 1),
+                                             Symbol('rand_v_2'): (1e-5, 1)})
     self.add(interior, name="Interior")
 
 
