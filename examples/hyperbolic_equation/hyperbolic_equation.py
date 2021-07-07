@@ -127,11 +127,12 @@ class BuckleyHeterogeneous(PDES):
 
   name = 'BuckleyLeverettHeterogeneous'
 
-  def __init__(self, u='u', dim=3, time=True, eps=1e-2):
+  def __init__(self, u='u', dim=3, time=True, weighting='grad_magnitude_u'):
     # set params
     self.u = u
     self.dim = dim
     self.time = time
+    self.weighting = weighting
 
     # coordinates
     x, y, z = Symbol('x'), Symbol('y'), Symbol('z')
@@ -160,7 +161,7 @@ class BuckleyHeterogeneous(PDES):
     #   c = Number(c)
     rand_v_1 = Symbol("rand_v_1")
     rand_v_2 = Symbol("rand_v_2")
-    v_d = sqrt(-2 * ln(rand_v_1)) * cos(2 * np.pi * rand_v_2)
+    v_d = ((-2 * ln(rand_v_1)) ** 0.5) * cos(2 * np.pi * rand_v_2) / 5 + 1
 
     # set equations
     self.equations = {}
@@ -178,10 +179,13 @@ class BuckleyHeterogeneous(PDES):
     f = Max(-(1.366025403514163 * u) * (Heaviside(u - 0.577357735773577) - 1)
             + 2 * (u ** 2) * Heaviside(u - 0.577357735773577) / (2 * (u) ** 2 + (u - 1) ** 2), 0)
 
-    # True f
-    # f = (u - c) * (u - c) / ((u - c) ** 2 + (1 - u) * (1 - u) / 2)
+    # f = u * u / (u ** 2 + (1 - u) * (1 - u) / 2)
 
     self.equations['buckley_heterogeneous'] = u.diff(t) + v_d * f.diff(x).replace(DiracDelta, lambda x: 0)
+
+    # self.equations['buckley_heterogeneous'] = ((u.diff(t) + v_d * f.diff(x))
+    #                                            / (0.1*Function(self.weighting)(*input_variables) + 1))
+
 
 
 class BuckleyEquationParam(PDES):

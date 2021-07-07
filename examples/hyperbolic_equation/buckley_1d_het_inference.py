@@ -5,12 +5,13 @@ import sys
 
 # sys.path.append('../../')
 from simnet.solver import Solver
-from simnet.dataset import TrainDomain, ValidationDomain
-from simnet.data import Validation
+from simnet.dataset import TrainDomain, ValidationDomain, InferenceDomain
+from simnet.data import Validation, Inference
 from simnet.sympy_utils.geometry_1d import Line1D
 from hyperbolic_equation import BuckleyHeterogeneous, GradMag
 from simnet.controller import SimNetController
 import scipy.io as sio
+from scipy.stats import truncnorm
 import time
 
 # params for domain
@@ -24,10 +25,14 @@ geo = Line1D(0, L)
 # x = Symbol('x')
 t_symbol = Symbol('t')
 time_range = {t_symbol: (0, L)}
+x = Symbol('x')
 
 
 # Synpy variable to parametrize random velocities
 # vel_ranges = (0.5, 2.0)
+
+def get_truncated_normal(mean=0, sd=1, low=0, upp=10):
+  return truncnorm((low - mean) / sd, (upp - mean) / sd, loc=mean, scale=sd)
 
 
 class BuckleyTrain(TrainDomain):
@@ -92,20 +97,35 @@ class BuckleyVal(ValidationDomain):
     self.add(val, name='Val')
 
 
+class BuckleyInference(InferenceDomain):
+  def __init__(self, **config):
+    super(BuckleyInference, self).__init__()
+    # save entire domain
+
+    for i in range(1000):
+      # velocity = float(velocity)
+      sampled_interior = geo.sample_interior(1024 * 5,
+                                             bounds={x: (0, L)},
+                                             param_ranges={t_symbol: (0, tf),
+                                                           Symbol('rand_v_1'): (1e-5, 1.0),
+                                                           Symbol('rand_v_2'): (1e-5, 1.0)})
+      interior = Inference(sampled_interior, ['u'])
+      self.add(interior, name="Inference_" + str(i).zfill(5))
+
+
 # Define neural network
 class BuckleySolver(Solver):
   train_domain = BuckleyTrain
   val_domain = BuckleyVal
+  inference_domain = BuckleyInference
 
   # arch = SirenArch
 
   def __init__(self, **config):
     super(BuckleySolver, self).__init__(**config)
 
-    # self.equations = BuckleyHeterogeneous(u='u', dim=1, time=True).make_node()
-    self.equations = (
-      BuckleyHeterogeneous(u='u', dim=1, time=True).make_node(stop_gradients=['grad_magnitude_u'])
-      + GradMag('u').make_node())
+    self.equations = BuckleyHeterogeneous(u='u', dim=1, time=True).make_node()
+
     buckley_net = self.arch.make_node(name='buckley_net',
                                       inputs=['x', 't', 'rand_v_1', 'rand_v_2'],
                                       outputs=['u'])
@@ -114,13 +134,11 @@ class BuckleySolver(Solver):
   @classmethod  # Explain This
   def update_defaults(cls, defaults):
     defaults.update({
-      'network_dir': './network_checkpoint/buckley_het_weight_{}'.format(int(time.time())),
-      'max_steps': 70000,
-      'decay_steps': 500,
-      'start_lr': 1e-3,
+      'network_dir': './network_checkpoint/buckley_het_inf_{}'.format(int(time.time())),
+      'initialize_network_dir': './network_checkpoint/buckley_het_1625606563',
+      'max_steps': 1,
       'rec_results_cpu': True,
-      'amp': True,
-      'xla': True
+      'rec_results_freq': 1
     })
 
 
