@@ -102,10 +102,10 @@ class BuckleySolver(Solver):
   def __init__(self, **config):
     super(BuckleySolver, self).__init__(**config)
 
-    # self.equations = BuckleyHeterogeneous(u='u', dim=1, time=True).make_node()
-    self.equations = (
-      BuckleyHeterogeneous(u='u', dim=1, time=True).make_node(stop_gradients=['grad_magnitude_u'])
-      + GradMag('u').make_node())
+    self.equations = BuckleyHeterogeneous(u='u', dim=1, time=True).make_node()
+    # self.equations = (
+    #   BuckleyHeterogeneous(u='u', dim=1, time=True).make_node(stop_gradients=['grad_magnitude_u'])
+    #   + GradMag('u').make_node())
     buckley_net = self.arch.make_node(name='buckley_net',
                                       inputs=['x', 't', 'rand_v_1', 'rand_v_2'],
                                       outputs=['u'])
@@ -114,8 +114,8 @@ class BuckleySolver(Solver):
   @classmethod  # Explain This
   def update_defaults(cls, defaults):
     defaults.update({
-      'network_dir': './network_checkpoint/buckley_het_weight_{}'.format(int(time.time())),
-      'max_steps': 70000,
+      'network_dir': './network_checkpoint/buckley_het_{}'.format(int(time.time())),
+      'max_steps': 90000,
       'decay_steps': 500,
       'start_lr': 1e-3,
       'rec_results_cpu': True,

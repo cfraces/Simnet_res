@@ -161,7 +161,7 @@ class BuckleyHeterogeneous(PDES):
     #   c = Number(c)
     rand_v_1 = Symbol("rand_v_1")
     rand_v_2 = Symbol("rand_v_2")
-    v_d = ((-2 * ln(rand_v_1)) ** 0.5) * cos(2 * np.pi * rand_v_2) / 5 + 1
+    v_d = ((-2 * ln(rand_v_1)) ** 0.5) * cos(2 * np.pi * rand_v_2) / 5 + 1  # + x
 
     # set equations
     self.equations = {}
@@ -176,16 +176,21 @@ class BuckleyHeterogeneous(PDES):
     # f = Max(-(tangent[1] / (tangent[0] - sinit) * (u - sinit)) * (Heaviside(u - tangent[0]) - 1) + Heaviside(
     #   u - tangent[0]) * (u - swc) ** 2 / ((u - swc) ** 2 + ((1 - u - sor) ** 2) / M), 0)
 
-    f = Max(-(1.366025403514163 * u) * (Heaviside(u - 0.577357735773577) - 1)
-            + 2 * (u ** 2) * Heaviside(u - 0.577357735773577) / (2 * (u) ** 2 + (u - 1) ** 2), 0)
+    # f = Max(-(1.366025403514163 * u) * (Heaviside(u - 0.577357735773577) - 1)
+    #         + 2 * (u ** 2) * Heaviside(u - 0.577357735773577) / (2 * (u) ** 2 + (u - 1) ** 2), 0)
 
     # f = u * u / (u ** 2 + (1 - u) * (1 - u) / 2)
 
-    self.equations['buckley_heterogeneous'] = u.diff(t) + v_d * f.diff(x).replace(DiracDelta, lambda x: 0)
+    # Heterogenous
+    s_tangent = 0.577357735773577
+    f_tangent = 0.788685333982125 * v_d
+    f = Max(-(f_tangent * u / s_tangent) * (Heaviside(u - s_tangent) - 1)
+            + 2 * v_d * (u ** 2) * Heaviside(u - s_tangent) / (2 * (u) ** 2 + (u - 1) ** 2), 0)
+
+    self.equations['buckley_heterogeneous'] = u.diff(t) + f.diff(x).replace(DiracDelta, lambda x: 0)
 
     # self.equations['buckley_heterogeneous'] = ((u.diff(t) + v_d * f.diff(x))
     #                                            / (0.1*Function(self.weighting)(*input_variables) + 1))
-
 
 
 class BuckleyEquationParam(PDES):
