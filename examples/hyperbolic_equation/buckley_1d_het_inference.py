@@ -134,8 +134,8 @@ class BuckleySolver(Solver):
   @classmethod  # Explain This
   def update_defaults(cls, defaults):
     defaults.update({
-      'network_dir': './network_checkpoint/buckley_het_corr_inf_{}'.format(int(time.time())),
-      'initialize_network_dir': './network_checkpoint/buckley_het_corr1625674849',
+      'network_dir': './network_checkpoint/buckley_het_diff_inf_{}'.format(int(time.time())),
+      'initialize_network_dir': './network_checkpoint/buckley_het_diff_1629311671',
       'max_steps': 1,
       'rec_results_cpu': True,
       'rec_results_freq': 1

@@ -161,7 +161,10 @@ class BuckleyHeterogeneous(PDES):
     #   c = Number(c)
     rand_v_1 = Symbol("rand_v_1")
     rand_v_2 = Symbol("rand_v_2")
-    v_d = ((-2 * ln(rand_v_1)) ** 0.5) * cos(2 * np.pi * rand_v_2) / 5 + 1  # + x
+    #narrow
+    # v_d = ((-2 * ln(rand_v_1)) ** 0.5) * cos(2 * np.pi * rand_v_2) / 5 + 1  # + x
+    # wide
+    v_d = ((-2 * ln(rand_v_1)) ** 0.5) * cos(2 * np.pi * rand_v_2) + 4  # + x
 
     # set equations
     self.equations = {}
@@ -171,15 +174,12 @@ class BuckleyHeterogeneous(PDES):
     sor = 0.
     sinit = 0.
     M = 2
-    tangent = [0.568821882188219, 0.751580500446855]
 
-    f = v_d * Max(-(tangent[1] / (tangent[0] - sinit) * (u - sinit)) * (Heaviside(u - tangent[0]) - 1) + Heaviside(
-      u - tangent[0]) * (u - swc) ** 2 / ((u - swc) ** 2 + ((1 - u - sor) ** 2) / M), 0)
+    # tangent = [0.568821882188219, 0.751580500446855]
+    # f = v_d * Max(-(tangent[1] / (tangent[0] - sinit) * (u - sinit)) * (Heaviside(u - tangent[0]) - 1) + Heaviside(
+    #   u - tangent[0]) * (u - swc) ** 2 / ((u - swc) ** 2 + ((1 - u - sor) ** 2) / M), 0)
 
-    # f = Max(-(1.366025403514163 * u) * (Heaviside(u - 0.577357735773577) - 1)
-    #         + 2 * (u ** 2) * Heaviside(u - 0.577357735773577) / (2 * (u) ** 2 + (u - 1) ** 2), 0)
-
-    # f = u * u / (u ** 2 + (1 - u) * (1 - u) / 2)
+    f = v_d * (u - swc) ** 2 / ((u - swc) ** 2 + ((1 - u - sor) ** 2) / M)
 
     # Heterogenous
     # s_tangent = 0.577357735773577
@@ -187,7 +187,11 @@ class BuckleyHeterogeneous(PDES):
     # f = Max(-(f_tangent * u / s_tangent) * (Heaviside(u - s_tangent) - 1)
     #         + 2 * v_d * (u ** 2) * Heaviside(u - s_tangent) / (2 * (u) ** 2 + (u - 1) ** 2), 0)
 
-    self.equations['buckley_heterogeneous'] = u.diff(t) + f.diff(x).replace(DiracDelta, lambda x: 0)
+    # self.equations['buckley_heterogeneous'] = u.diff(t) + f.diff(x).replace(DiracDelta, lambda x: 0)
+
+    # Diffusion
+    eps = 1e-2
+    self.equations['buckley_heterogeneous'] = u.diff(t) + f.diff(x) - eps*(u.diff(x)).diff(x)
 
     # self.equations['buckley_heterogeneous'] = ((u.diff(t) + v_d * f.diff(x))
     #                                            / (Function(self.weighting)(*input_variables) + 1))

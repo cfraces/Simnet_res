@@ -114,7 +114,7 @@ class BuckleySolver(Solver):
   @classmethod  # Explain This
   def update_defaults(cls, defaults):
     defaults.update({
-      'network_dir': './network_checkpoint/buckley_het_weight_{}'.format(int(time.time())),
+      'network_dir': './network_checkpoint/buckley_het_diff_{}'.format(int(time.time())),
       'max_steps': 30000,
       'decay_steps': 500,
       'start_lr': 1e-3,
