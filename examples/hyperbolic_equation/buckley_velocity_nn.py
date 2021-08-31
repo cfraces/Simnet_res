@@ -33,9 +33,12 @@ pore_vel_outvar = {}
 pore_vel_outvar['c'] = np.ones_like(pore_vel_invar['x'])
 
 # Increments
-pore_vel_outvar['c'] = 2 - (
-  np.tanh(80 * (pore_vel_invar['x'] - 0.25)) / 4 + np.tanh(80 * (pore_vel_invar['x'] - 0.5)) / 4 +
-  np.tanh(80 * (pore_vel_invar['x'] - 0.75)) / 4 + 0.75)
+pore_vel_outvar['c'] = pore_vel_invar['x'] + 1.5 + np.cos(100 * pore_vel_invar['x'])
+
+
+# 2 - (
+# np.tanh(80 * (pore_vel_invar['x'] - 0.25)) / 4 + np.tanh(80 * (pore_vel_invar['x'] - 0.5)) / 4 +
+# np.tanh(80 * (pore_vel_invar['x'] - 0.75)) / 4 + 0.75)
 
 
 class BuckleyVelocity(PDES):
@@ -79,11 +82,12 @@ class BuckleyVelocity(PDES):
     sinit = 0.
     M = 2
     f = (u - swc) ** 2 / ((u - swc) ** 2 + ((1 - u - sor) ** 2) / M)
+    eps = 2.5e-3
 
     self.equations = {}
-    # self.equations['buckley_heterogeneous'] = u.diff(t) + c * f.diff(x)
-    self.equations['buckley_heterogeneous'] = ((u.diff(t) + c * f.diff(x))
-                                               / (Function(self.weighting)(*input_variables) + 1))
+    self.equations['buckley_heterogeneous'] = u.diff(t) + c * f.diff(x)
+    # self.equations['buckley_heterogeneous'] = ((u.diff(t) + c * f.diff(x) - eps*(u.diff(x)).diff(x))
+    #                                            / (Function(self.weighting)(*input_variables) + 1))
 
 
 class GradMag(PDES):
@@ -108,7 +112,8 @@ class GradMag(PDES):
 
     # set equations
     self.equations = {}
-    self.equations['grad_magnitude_' + self.u] = 0.05*u.diff(t) ** 2# + 0.1*u.diff(x) ** 2
+    # self.equations['grad_magnitude_' + self.u] = 0.05*u.diff(t) ** 2 + 0.01*u.diff(x) ** 2
+    self.equations['grad_magnitude_' + self.u] = u.diff(t) ** 2 + u.diff(x) ** 2
 
 
 class BuckleyTrain(TrainDomain):
@@ -155,7 +160,7 @@ class BuckleyVal(ValidationDomain):
     X, T = np.meshgrid(x, t)
     X = np.expand_dims(X.flatten(), axis=-1)
     T = np.expand_dims(T.flatten(), axis=-1)
-    w = sio.loadmat('./buckley/Buckley_het_stairs.mat')
+    w = sio.loadmat('./buckley/Buckley_het_cos.mat')
     u = np.expand_dims(w['usol'].flatten(), axis=-1)
     invar_numpy = {'x': X, 't': T}
     outvar_numpy = {'z': u}
@@ -190,8 +195,8 @@ class BuckleySolver(Solver):
 
     self.equations = (
       BuckleyVelocity(u='z', c='c', dim=1, time=True, weighting='grad_magnitude_z').make_node(
-        stop_gradients=['c', 'c__x', 'c__t', 'grad_magnitude_z'])
-      + GradMag('z').make_node())
+        stop_gradients=['c', 'c__x', 'c__t', 'grad_magnitude_z']))
+      # + GradMag('z').make_node())
 
     buckley_net = self.arch.make_node(name='buckley_net',
                                       inputs=['x', 't'],
@@ -205,10 +210,10 @@ class BuckleySolver(Solver):
   @classmethod  # Explain This
   def update_defaults(cls, defaults):
     defaults.update({
-      'network_dir': './network_checkpoint/buckley_vel_var_weight{}'.format(int(time.time())),
+      'network_dir': './network_checkpoint/buckley_vel_cos_diff_weight{}'.format(int(time.time())),
       'max_steps': 70000,
       'decay_steps': 500,
-      'start_lr': 1e-3,
+      'start_lr': 5e-4,
       'xla': True
     })
 
