@@ -33,7 +33,24 @@ pore_vel_outvar = {}
 pore_vel_outvar['c'] = np.ones_like(pore_vel_invar['x'])
 
 # Increments
-pore_vel_outvar['c'] = pore_vel_invar['x'] + 1.5 + np.cos(100*pore_vel_invar['x'])
+pore_vel_outvar['c'] = pore_vel_invar['x'] + 1.5 + np.cos(100 * pore_vel_invar['x'])
+
+# define saturation data for assimilation
+x_obs = np.linspace(0, 1, 256)
+mesh_x, mesh_t = np.meshgrid(x_obs,
+                             np.linspace(0, 1, 100),
+                             indexing='ij')
+sat_invar = {}
+sat_invar['x'] = np.expand_dims(mesh_x.flatten(), axis=-1)
+sat_invar['t'] = np.expand_dims(mesh_t.flatten(), axis=-1)
+
+w = sio.loadmat('./buckley/Buckley_het_cos.mat')
+# x_loc = [np.where(np.abs(w['x'][:,0]-x_obs[i])<1e-14)[0][0] for i in range(x_obs.shape[0])]
+sat_outvar = {}
+sat_outvar['z'] = np.expand_dims(w['usol'].flatten(), axis=-1)
+
+
+
 # 2 - (
 # np.tanh(80 * (pore_vel_invar['x'] - 0.25)) / 4 + np.tanh(80 * (pore_vel_invar['x'] - 0.5)) / 4 +
 # np.tanh(80 * (pore_vel_invar['x'] - 0.75)) / 4 + 0.75)
@@ -80,11 +97,11 @@ class BuckleyVelocity(PDES):
     sinit = 0.
     M = 2
     f = (u - swc) ** 2 / ((u - swc) ** 2 + ((1 - u - sor) ** 2) / M)
-    eps = 1e-3
+    eps = 2.5e-3
 
     self.equations = {}
-    self.equations['buckley_heterogeneous'] = u.diff(t) + c * f.diff(x) - eps*(u.diff(x)).diff(x)
-    # self.equations['buckley_heterogeneous'] = ((u.diff(t) + c * f.diff(x) )
+    self.equations['buckley_heterogeneous'] = u.diff(t) + c * f.diff(x)- eps*(u.diff(x)).diff(x)
+    # self.equations['buckley_heterogeneous'] = ((u.diff(t) + c * f.diff(x) - eps*(u.diff(x)).diff(x))
     #                                            / (Function(self.weighting)(*input_variables) + 1))
 
 
@@ -111,7 +128,8 @@ class GradMag(PDES):
     # set equations
     self.equations = {}
     # self.equations['grad_magnitude_' + self.u] = 0.05*u.diff(t) ** 2 + 0.01*u.diff(x) ** 2
-    self.equations['grad_magnitude_' + self.u] = 0.6*u.diff(t) ** 2 + 0.01*u.diff(x) ** 2# +
+    self.equations['grad_magnitude_' + self.u] = u.diff(t) ** 2 + u.diff(x) ** 2
+
 
 class BuckleyTrain(TrainDomain):
   def __init__(self, **config):
@@ -119,6 +137,10 @@ class BuckleyTrain(TrainDomain):
     # train network to emulate wave speed
     pore_vel = BC.from_numpy(pore_vel_invar, pore_vel_outvar, batch_size=2048)
     self.add(pore_vel, "PoreVel")
+
+    # train network to remember hard data
+    sat_obs = BC.from_numpy(sat_invar, sat_outvar, batch_size=2048)
+    self.add(sat_obs, "SatObs")
 
     # initial conditions
     IC = geo.interior_bc(outvar_sympy={'z': 0, 'z__t': 0},
@@ -193,7 +215,7 @@ class BuckleySolver(Solver):
     self.equations = (
       BuckleyVelocity(u='z', c='c', dim=1, time=True, weighting='grad_magnitude_z').make_node(
         stop_gradients=['c', 'c__x', 'c__t', 'grad_magnitude_z']))
-      # + GradMag('z').make_node())
+    # + GradMag('z').make_node())
 
     buckley_net = self.arch.make_node(name='buckley_net',
                                       inputs=['x', 't'],
@@ -201,13 +223,16 @@ class BuckleySolver(Solver):
     speed_net = self.arch.make_node(name='speed_net',
                                     inputs=['x'],
                                     outputs=['c'])
+    assim_net = self.arch.make_node(name='assim_net',
+                                    inputs=['x', 't'],
+                                    outputs=['z'])
 
-    self.nets = [buckley_net, speed_net]
+    self.nets = [buckley_net, speed_net, assim_net]
 
   @classmethod  # Explain This
   def update_defaults(cls, defaults):
     defaults.update({
-      'network_dir': './network_checkpoint/buckley_vel_cos_diff{}'.format(int(time.time())),
+      'network_dir': './network_checkpoint/buckley_vel_cos_assim_{}'.format(int(time.time())),
       'max_steps': 70000,
       'decay_steps': 500,
       'start_lr': 5e-4,
