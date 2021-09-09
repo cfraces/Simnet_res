@@ -1,4 +1,4 @@
-from sympy import Symbol, exp, Function, Number
+from sympy import Symbol, exp, Function, Number, Heaviside, DiracDelta, Max
 import numpy as np
 import scipy.io as sio
 import time
@@ -27,7 +27,7 @@ time_range = {t_symbol: (0, time_length)}
 
 # define pore velocity numpy array
 pore_vel_invar = {}
-pore_vel_invar['x'] = np.linspace(0, L, 512).reshape(-1, 1)
+pore_vel_invar['x'] = np.linspace(0, L, 256).reshape(-1, 1)
 
 pore_vel_outvar = {}
 pore_vel_outvar['c'] = np.ones_like(pore_vel_invar['x'])
@@ -36,19 +36,25 @@ pore_vel_outvar['c'] = np.ones_like(pore_vel_invar['x'])
 pore_vel_outvar['c'] = pore_vel_invar['x'] + 1.5 + np.cos(100 * pore_vel_invar['x'])
 
 # define saturation data for assimilation
-x_obs = np.linspace(0, 1, 256)
-mesh_x, mesh_t = np.meshgrid(x_obs,
+n_obs = 2
+x_obs = np.linspace(0, 1, n_obs)
+mesh_x, mesh_t = np.meshgrid(np.linspace(0, L, n_obs),
                              np.linspace(0, 1, 100),
                              indexing='ij')
 sat_invar = {}
+# n_pts = 100
+# idx_rnd = np.random.choice(256*100, n_pts)
+# sat_invar['x'] = np.expand_dims(mesh_x.flatten()[idx_rnd], axis=-1)
+# sat_invar['t'] = np.expand_dims(mesh_t.flatten()[idx_rnd], axis=-1)
 sat_invar['x'] = np.expand_dims(mesh_x.flatten(), axis=-1)
 sat_invar['t'] = np.expand_dims(mesh_t.flatten(), axis=-1)
 
 w = sio.loadmat('./buckley/Buckley_het_cos.mat')
-# x_loc = [np.where(np.abs(w['x'][:,0]-x_obs[i])<1e-14)[0][0] for i in range(x_obs.shape[0])]
+x_loc = [np.argmin(np.abs(w['x'][:, 0]-x_obs[i])) for i in range(n_obs)]
 sat_outvar = {}
-sat_outvar['z'] = np.expand_dims(w['usol'].flatten(), axis=-1)
-
+sat_outvar['z'] = np.expand_dims(w['usol'][x_loc].flatten(), axis=-1)
+# sat_outvar['z'] = np.expand_dims(w['usol'].flatten()[idx_rnd], axis=-1)
+sat_outvar['buckley_heterogeneous'] = np.zeros_like(sat_outvar['z'])
 
 
 # 2 - (
@@ -97,12 +103,15 @@ class BuckleyVelocity(PDES):
     sinit = 0.
     M = 2
     f = (u - swc) ** 2 / ((u - swc) ** 2 + ((1 - u - sor) ** 2) / M)
-    eps = 2.5e-3
+    # eps = 2.5e-3 - eps*(u.diff(x)).diff(x)
+
+    # f = Max(-(1.366025403514163 * u) * (Heaviside(u - 0.577357735773577) - 1)
+    #         + 2 * (u ** 2) * Heaviside(u - 0.577357735773577) / (2 * (u) ** 2 + (u - 1) ** 2), 0)
 
     self.equations = {}
-    self.equations['buckley_heterogeneous'] = u.diff(t) + c * f.diff(x)- eps*(u.diff(x)).diff(x)
-    # self.equations['buckley_heterogeneous'] = ((u.diff(t) + c * f.diff(x) - eps*(u.diff(x)).diff(x))
-    #                                            / (Function(self.weighting)(*input_variables) + 1))
+    # self.equations['buckley_heterogeneous'] = u.diff(t) + c * f.diff(x).replace(DiracDelta, lambda x: 0)#+ c * f.diff(x) - eps * (u.diff(x)).diff(x)
+    self.equations['buckley_heterogeneous'] = ((u.diff(t) + c * f.diff(x))
+                                               / (Function(self.weighting)(*input_variables) + 1))
 
 
 class GradMag(PDES):
@@ -214,8 +223,7 @@ class BuckleySolver(Solver):
 
     self.equations = (
       BuckleyVelocity(u='z', c='c', dim=1, time=True, weighting='grad_magnitude_z').make_node(
-        stop_gradients=['c', 'c__x', 'c__t', 'grad_magnitude_z']))
-    # + GradMag('z').make_node())
+        stop_gradients=['c', 'c__x', 'c__t', 'z', 'z__x', 'z__t', 'grad_magnitude_z']) + GradMag('z').make_node())
 
     buckley_net = self.arch.make_node(name='buckley_net',
                                       inputs=['x', 't'],
@@ -232,7 +240,7 @@ class BuckleySolver(Solver):
   @classmethod  # Explain This
   def update_defaults(cls, defaults):
     defaults.update({
-      'network_dir': './network_checkpoint/buckley_vel_cos_assim_{}'.format(int(time.time())),
+      'network_dir': './network_checkpoint/buckley_vel_cos_assim_2pts_weight_{}'.format(int(time.time())),
       'max_steps': 70000,
       'decay_steps': 500,
       'start_lr': 5e-4,
