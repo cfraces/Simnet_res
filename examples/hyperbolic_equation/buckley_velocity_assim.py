@@ -109,9 +109,9 @@ class BuckleyVelocity(PDES):
     #         + 2 * (u ** 2) * Heaviside(u - 0.577357735773577) / (2 * (u) ** 2 + (u - 1) ** 2), 0)
 
     self.equations = {}
-    # self.equations['buckley_heterogeneous'] = u.diff(t) + c * f.diff(x).replace(DiracDelta, lambda x: 0)#+ c * f.diff(x) - eps * (u.diff(x)).diff(x)
-    self.equations['buckley_heterogeneous'] = ((u.diff(t) + c * f.diff(x))
-                                               / (Function(self.weighting)(*input_variables) + 1))
+    self.equations['buckley_heterogeneous'] = u.diff(t) + c * f.diff(x)#.replace(DiracDelta, lambda x: 0)#+ c * f.diff(x) - eps * (u.diff(x)).diff(x)
+    # self.equations['buckley_heterogeneous'] = ((u.diff(t) + c * f.diff(x))
+    #                                            / (Function(self.weighting)(*input_variables) + 1))
 
 
 class GradMag(PDES):
@@ -222,8 +222,8 @@ class BuckleySolver(Solver):
     super(BuckleySolver, self).__init__(**config)
 
     self.equations = (
-      BuckleyVelocity(u='z', c='c', dim=1, time=True, weighting='grad_magnitude_z').make_node(
-        stop_gradients=['c', 'c__x', 'c__t', 'z', 'z__x', 'z__t', 'grad_magnitude_z']) + GradMag('z').make_node())
+      BuckleyVelocity(u='z', c='c', dim=1, time=True).make_node(
+        stop_gradients=['c', 'z', 'z__t', 'z__x']))# + GradMag('z').make_node())
 
     buckley_net = self.arch.make_node(name='buckley_net',
                                       inputs=['x', 't'],
@@ -240,7 +240,7 @@ class BuckleySolver(Solver):
   @classmethod  # Explain This
   def update_defaults(cls, defaults):
     defaults.update({
-      'network_dir': './network_checkpoint/buckley_vel_cos_assim_2pts_weight_{}'.format(int(time.time())),
+      'network_dir': './checkpoint_assim/buckley_vel_cos_2pts_c_{}'.format(int(time.time())),
       'max_steps': 70000,
       'decay_steps': 500,
       'start_lr': 5e-4,

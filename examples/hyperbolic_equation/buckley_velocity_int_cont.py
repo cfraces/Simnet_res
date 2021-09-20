@@ -1,4 +1,4 @@
-from sympy import Symbol, exp, Function, Number
+from sympy import Symbol, exp, Function, Number, Abs, cos, Heaviside, DiracDelta, Max
 import numpy as np
 import scipy.io as sio
 import time
@@ -35,10 +35,10 @@ pore_vel_outvar['c'] = np.ones_like(pore_vel_invar['x'])
 # Increments
 pore_vel_outvar['c'] = pore_vel_invar['x'] + 1.5 + np.cos(100 * pore_vel_invar['x'])
 
-
-# 2 - (
-# np.tanh(80 * (pore_vel_invar['x'] - 0.25)) / 4 + np.tanh(80 * (pore_vel_invar['x'] - 0.5)) / 4 +
-# np.tanh(80 * (pore_vel_invar['x'] - 0.75)) / 4 + 0.75)
+# points for Integral Continuity
+x_pos = Symbol('x_pos')
+x_pos_range = {x_pos: lambda batch_size: np.full((batch_size, 1), np.random.uniform(0, L))}
+plane1 = Line1D(0.49, 0.51)
 
 
 class BuckleyVelocity(PDES):
@@ -81,11 +81,19 @@ class BuckleyVelocity(PDES):
     sor = 0.
     sinit = 0.
     M = 2
-    f = (u - swc) ** 2 / ((u - swc) ** 2 + ((1 - u - sor) ** 2) / M)
+    # f = (u - swc) ** 2 / ((u - swc) ** 2 + ((1 - u - sor) ** 2) / M)
     eps = 2.5e-3
+    v_d = x + 1.5 + cos(100*x)
+
+    s_tangent = 0.577357735773577
+    f_tangent = 0.788685333982125 * v_d
+    f = Max(-(f_tangent * u / s_tangent) * (Heaviside(u - s_tangent) - 1)
+            + 2 * v_d * (u ** 2) * Heaviside(u - s_tangent) / (2 * (u) ** 2 + (u - 1) ** 2), 0)
 
     self.equations = {}
-    self.equations['buckley_heterogeneous'] = u.diff(t) + c * f.diff(x)
+    self.equations['integral_continuity'] = 1.366 * u.diff(x) - v_d * f.diff(x).replace(DiracDelta, lambda x: 0)
+    # self.equations['buckley_heterogeneous'] = u.diff(t) + v_d * f.diff(x)
+    self.equations['buckley_heterogeneous'] = u.diff(t) + v_d * f.diff(x).replace(DiracDelta, lambda x: 0)
     # self.equations['buckley_heterogeneous'] = ((u.diff(t) + c * f.diff(x) - eps*(u.diff(x)).diff(x))
     #                                            / (Function(self.weighting)(*input_variables) + 1))
 
@@ -119,9 +127,6 @@ class GradMag(PDES):
 class BuckleyTrain(TrainDomain):
   def __init__(self, **config):
     super(BuckleyTrain, self).__init__()
-    # train network to emulate wave speed
-    pore_vel = BC.from_numpy(pore_vel_invar, pore_vel_outvar, batch_size=2048)
-    self.add(pore_vel, "PoreVel")
 
     # initial conditions
     IC = geo.interior_bc(outvar_sympy={'z': 0, 'z__t': 0},
@@ -148,6 +153,53 @@ class BuckleyTrain(TrainDomain):
                                param_ranges={t_symbol: (0, tf)})
     self.add(interior, name="Interior")
 
+    # integral continuity
+    for i in range(5):
+      IC = geo.boundary_bc(outvar_sympy={'integral_continuity': 0},
+                           batch_size_per_area=512,
+                           lambda_sympy={'lambda_integral_continuity': 1.0},
+                           criteria=geo.sdf > 0,
+                           param_ranges={t_symbol: (0, tf), **x_pos_range},
+                           fixed_var=False
+                           )
+      self.add(IC, name="IntegralContinuity_" + str(i))
+    # plane1Cont = geo.interior_bc(outvar_sympy={'integral_continuity': 0},
+    #                              bounds={x: (0.19, 0.2)},
+    #                              batch_size_per_area=512,
+    #                              lambda_sympy={'lambda_integral_continuity': 1.0},
+    #                              param_ranges={t_symbol: (0, tf)}
+    #                              )
+    # plane2Cont = geo.interior_bc(outvar_sympy={'integral_continuity': 0},
+    #                              bounds={x: (0.39, 0.4)},
+    #                              batch_size_per_area=512,
+    #                              lambda_sympy={'lambda_integral_continuity': 1.0},
+    #                              param_ranges={t_symbol: (0, tf)}
+    #                              )
+    # plane3Cont = geo.interior_bc(outvar_sympy={'integral_continuity': 0},
+    #                              bounds={x: (0.59, 0.6)},
+    #                              batch_size_per_area=512,
+    #                              lambda_sympy={'lambda_integral_continuity': 1.0},
+    #                              param_ranges={t_symbol: (0, tf)}
+    #                              )
+    # plane4Cont = geo.interior_bc(outvar_sympy={'integral_continuity': 0},
+    #                              bounds={x: (0.79, 0.8)},
+    #                              batch_size_per_area=512,
+    #                              lambda_sympy={'lambda_integral_continuity': 1.0},
+    #                              param_ranges={t_symbol: (0, tf)}
+    #                              )
+    # plane5Cont = geo.interior_bc(outvar_sympy={'integral_continuity': 0},
+    #                              bounds={x: (0.99, 1)},
+    #                              batch_size_per_area=512,
+    #                              lambda_sympy={'lambda_integral_continuity': 1.0},
+    #                              param_ranges={t_symbol: (0, tf)}
+    #                              )
+    #
+    # self.add(plane1Cont, name="IntegralContinuity1")
+    # self.add(plane2Cont, name="IntegralContinuity2")
+    # self.add(plane3Cont, name="IntegralContinuity3")
+    # self.add(plane4Cont, name="IntegralContinuity4")
+    # self.add(plane5Cont, name="IntegralContinuity5")
+
 
 class BuckleyVal(ValidationDomain):
   def __init__(self, **config):
@@ -168,50 +220,46 @@ class BuckleyVal(ValidationDomain):
     self.add(val, name='Val')
 
 
-class BuckleyInference(InferenceDomain):
-  def __init__(self, **config):
-    super(BuckleyInference, self).__init__()
-    mesh_x, mesh_t = np.meshgrid(np.linspace(0, 1, 256),
-                                 np.linspace(0, 1, 256),
-                                 indexing='ij')
-    mesh_x = np.expand_dims(mesh_x.flatten(), axis=-1)
-    mesh_t = np.expand_dims(mesh_t.flatten(), axis=-1)
-    sampled_interior = {'x': mesh_x,
-                        't': mesh_t}
-    # geo.sample_interior(1024 * 5,
-    #                     bounds={x: (0, L)},
-    #                     param_ranges={t_symbol: (0, tf)})
-    interior = Inference(sampled_interior, ['z', 'c'])
-    self.add(interior, name="Inference_1")
+# class BuckleyInference(InferenceDomain):
+#   def __init__(self, **config):
+#     super(BuckleyInference, self).__init__()
+#     mesh_x, mesh_t = np.meshgrid(np.linspace(0, 1, 256),
+#                                  np.linspace(0, 1, 256),
+#                                  indexing='ij')
+#     mesh_x = np.expand_dims(mesh_x.flatten(), axis=-1)
+#     mesh_t = np.expand_dims(mesh_t.flatten(), axis=-1)
+#     sampled_interior = {'x': mesh_x,
+#                         't': mesh_t}
+#     # geo.sample_interior(1024 * 5,
+#     #                     bounds={x: (0, L)},
+#     #                     param_ranges={t_symbol: (0, tf)})
+#     interior = Inference(sampled_interior, ['z', 'c'])
+#     self.add(interior, name="Inference_1")
 
 
 class BuckleySolver(Solver):
   train_domain = BuckleyTrain
   val_domain = BuckleyVal
-  inference_domain = BuckleyInference
+  # inference_domain = BuckleyInference
 
   def __init__(self, **config):
     super(BuckleySolver, self).__init__(**config)
 
     self.equations = (
-      BuckleyVelocity(u='z', c='c', dim=1, time=True).make_node(
-        stop_gradients=['c', 'c__x', 'c__t']))
-      # + GradMag('z').make_node())
+      BuckleyVelocity(u='z', c='c', dim=1, time=True).make_node())
+    # + GradMag('z').make_node())
 
     buckley_net = self.arch.make_node(name='buckley_net',
                                       inputs=['x', 't'],
                                       outputs=['z'])
-    speed_net = self.arch.make_node(name='speed_net',
-                                    inputs=['x'],
-                                    outputs=['c'])
 
-    self.nets = [buckley_net, speed_net]
+    self.nets = [buckley_net]
 
   @classmethod  # Explain This
   def update_defaults(cls, defaults):
     defaults.update({
-      'network_dir': './network_checkpoint/buckley_vel_cos_diff_weight{}'.format(int(time.time())),
-      'max_steps': 70000,
+      'network_dir': './network_checkpoint/buckley_vel_cos_integral_dirac{}'.format(int(time.time())),
+      'max_steps': 30000,
       'decay_steps': 500,
       'start_lr': 5e-4,
       'xla': True

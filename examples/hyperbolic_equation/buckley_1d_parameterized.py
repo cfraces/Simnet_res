@@ -73,7 +73,7 @@ class BuckleyTrain(TrainDomain):
     x = Symbol('x')
 
     # initial conditions
-    IC = geo.interior_bc(outvar_sympy={'u': 0.15, 'u__t': 0},
+    IC = geo.interior_bc(outvar_sympy={'u': 0, 'u__t': 0},
                          bounds={x: (0, L)},
                          batch_size_per_area=5000,
                          lambda_sympy={'lambda_u': 1.0,
