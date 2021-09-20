@@ -5,8 +5,8 @@ import sys
 
 # sys.path.append('../../')
 from simnet.solver import Solver
-from simnet.dataset import TrainDomain, ValidationDomain
-from simnet.data import Validation
+from simnet.dataset import TrainDomain, ValidationDomain, InferenceDomain
+from simnet.data import Validation, Inference
 from simnet.sympy_utils.geometry_1d import Line1D
 from simnet.pdes import PDES
 from simnet.controller import SimNetController
@@ -24,6 +24,8 @@ geo = Line1D(0, L)
 # x = Symbol('x')
 t_symbol = Symbol('t')
 time_range = {t_symbol: (0, L)}
+
+x = Symbol('x')
 
 
 class BuckleyHeterogeneous(PDES):
@@ -107,7 +109,7 @@ class BuckleyHeterogeneous(PDES):
     # f = (u - c) * (u - c) / ((u - c) ** 2 + (1 - u) * (1 - u) / 2)
 
     self.equations['buckley_heterogeneous'] = (u.diff(t)
-                                                + v_d * f.diff(x).replace(DiracDelta, lambda x: 0))
+                                               + v_d * f.diff(x).replace(DiracDelta, lambda x: 0))
 
 
 class BuckleyTrain(TrainDomain):
@@ -172,10 +174,27 @@ class BuckleyVal(ValidationDomain):
     self.add(val, name='Val')
 
 
+class BuckleyInference(InferenceDomain):
+  def __init__(self, **config):
+    super(BuckleyInference, self).__init__()
+    # save entire domain
+
+    for i in range(1000):
+      # velocity = float(velocity)
+      sampled_interior = geo.sample_interior(1024 * 5,
+                                             bounds={x: (0, L)},
+                                             param_ranges={t_symbol: (0, tf),
+                                                           Symbol('rand_v_1'): (1e-5, 1.0),
+                                                           Symbol('rand_v_2'): (1e-5, 1.0)})
+      interior = Inference(sampled_interior, ['u'])
+      self.add(interior, name="Inference_" + str(i).zfill(5))
+
+
 # Define neural network
 class BuckleySolver(Solver):
   train_domain = BuckleyTrain
   val_domain = BuckleyVal
+  inference_domain = BuckleyInference
 
   # arch = SirenArch
 
