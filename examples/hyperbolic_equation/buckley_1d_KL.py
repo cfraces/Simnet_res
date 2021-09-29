@@ -95,7 +95,7 @@ class BuckleyHeterogeneous(PDES):
     # narrow
     # v_d = ((-2 * ln(rand_v_1)) ** 0.5) * cos(2 * np.pi * rand_v_2) / 5 + 1  # + x
     # wide
-    v_d = ((-2 * ln(rand_v_1)) ** 0.5) * cos(2 * np.pi * rand_v_2) + 4 + x
+    v_d = ((-2 * ln(rand_v_1)) ** 0.5) * cos(2 * np.pi * rand_v_2) + 4# + t
 
     # set equations
     self.equations = {}
