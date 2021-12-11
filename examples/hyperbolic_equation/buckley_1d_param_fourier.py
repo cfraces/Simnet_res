@@ -1,5 +1,5 @@
 # import SimNet library
-from sympy import Symbol, sin, Heaviside, DiracDelta, Max, Number, Function
+from sympy import Symbol, sin, Heaviside, DiracDelta, Max, Number, Function, ln, cos
 import numpy as np
 import sys
 
@@ -38,29 +38,34 @@ X = np.expand_dims(X.flatten(), axis=-1)
 T = np.expand_dims(T.flatten(), axis=-1)
 
 # v1
-ref_buckley_v_1 = sio.loadmat('./buckley/Buckley_het_sin100_vel_1.mat')
+ref_buckley_v_1 = sio.loadmat('./buckley/Buckley_het_fourier5_wide_vel_1.mat')
 u1 = np.expand_dims(ref_buckley_v_1['usol'].flatten(), axis=-1)
 outvar_v_1_numpy = {'u': u1}
 ud_1 = np.ones_like(X) * 1.0 + 1
 invar_numpy_v1 = {'x': X, 't': T, 'ud': ud_1}
 
 # v50
-ref_buckley_v_50 = sio.loadmat('./buckley/Buckley_het_sin100_vel_0.5.mat')
+ref_buckley_v_50 = sio.loadmat('./buckley/Buckley_het_fourier5_wide_vel_0.5.mat')
 u50 = np.expand_dims(ref_buckley_v_50['usol'].flatten(), axis=-1)
 outvar_v_50_numpy = {'u': u50}
 ud_50 = np.ones_like(X) * 0.5 + 1
 invar_numpy_v50 = {'x': X, 't': T, 'ud': ud_50}
 
 # v2
-ref_buckley_v_2 = sio.loadmat('./buckley/Buckley_het_sin100_vel_2.mat')
+ref_buckley_v_2 = sio.loadmat('./buckley/Buckley_het_fourier5_wide_vel_2.mat')
 u2 = np.expand_dims(ref_buckley_v_2['usol'].flatten(), axis=-1)
 outvar_v_2_numpy = {'u': u2}
 ud_2 = np.ones_like(X) * 2.0 + 1
 invar_numpy_v2 = {'x': X, 't': T, 'ud': ud_2}
 
-vel = Symbol('ud')
-vel_ranges = (0.5, 2.0)
-param_ranges = {vel: vel_ranges, t_symbol: (0, tf)}
+# vel = Symbol('ud')
+# vel_ranges = (0.5, 2.0)
+# param_ranges = {vel: vel_ranges, t_symbol: (0, tf)}
+
+n_modes = 5
+param_rng = {}
+for i in range(1, n_modes + 1):
+  param_rng[Symbol('rand_v_' + str(i))] = (1e-5, 1.0)
 
 
 def get_truncated_normal(mean=0, sd=1, low=0, upp=10):
@@ -98,7 +103,7 @@ class BuckleyEquationParam(PDES):
 
   name = 'BuckleyLeverettEquationParam'
 
-  def __init__(self, u='u', c='c', dim=3, time=True, eps=1e-2):
+  def __init__(self, u='u', dim=3, time=True, eps=1e-2):
     # set params
     self.u = u
     self.dim = dim
@@ -125,71 +130,68 @@ class BuckleyEquationParam(PDES):
     u = Function(u)(*input_variables)
 
     # wave speed coefficient
-    if type(c) is str:
-      c = Function(c)(*input_variables)
-    elif type(c) in [float, int]:
-      c = Number(c)
 
     # set equations
     self.equations = {}
 
-    # Piecewise f
-    # swc = 0.1
-    # sor = 0.05
-    # sinit = 0.15
-    # M = 2
-    # tangent = [0.568821882188219, 0.751580500446855]
-    #
-    # f = Max(-(tangent[1] / (tangent[0] - sinit) * (u - sinit)) * (Heaviside(u - tangent[0]) - 1) + Heaviside(
-    #   u - tangent[0]) * (u - swc) ** 2 / ((u - swc) ** 2 + ((1 - u - sor) ** 2) / M), 0)
+    n_modes = 5
+    rand_param = {}
+    for i in range(1, n_modes + 1):
+      rand_param['rand_v_' + str(i)] = Symbol('rand_v_' + str(i))
 
-    # f = Max(-(1.7075*u - 0.3415)*(Heaviside(u - 0.6597) - 1) + 2*(u - 0.2)**2*Heaviside(u - 0.6597)/(2*(u - 0.2)**2
-    # + (u - 1)**2), 0)
+    vd = sum(
+      [rand_param['rand_v_' + str(i)] * sin(2 * i * 3.1415 * x) * 3 * x * (x - 1) for i in range(1, n_modes + 1)]) + 2
 
-    vd = c * (sin(100*x*3.1415) + 1.5)
+    # rand_v_1 = Symbol("rand_v_1")
+    # rand_v_2 = Symbol("rand_v_2")
+    # v_d = (((-2 * ln(rand_v_1)) ** 0.5) * cos(2 * np.pi * rand_v_2) / 4 + 1) * 0.003
 
     f = Max(-(1.366025403514163 * u) * (Heaviside(u - 0.577357735773577) - 1)
-            + 2 * (u ** 2) * Heaviside(u - 0.577357735773577) / (2 * u ** 2 + (u - 1) ** 2), 0)
-
+            + 2 * (u ** 2) * Heaviside(u - 0.577357735773577) / (2 * (u) ** 2 + (u - 1) ** 2), 0)
+    # s_tangent = 0.577357735773577
+    # f_tangent = 0.788685333982125 * vd
+    # f = Max(-(f_tangent * u / s_tangent) * (Heaviside(u - s_tangent) - 1)
+    #         + 2 * vd * (u ** 2) * Heaviside(u - s_tangent) / (2 * (u) ** 2 + (u - 1) ** 2), 0)
     # True f
-    # f = (u - c) * (u - c) / ((u - c) ** 2 + (1 - u) * (1 - u) / 2)
-    # f1 = (s - swc) ** 2 / ((s - swc) ** 2 + (1 - s - sor) ** 2 / M)
+    # swc = 0.0
+    # sor = 0.
+    # M = 2
+    # f = (u - swc) ** 2 / ((u - swc) ** 2 + ((1 - u - sor) ** 2) / M)
 
     self.equations['buckley_equation_param'] = (u.diff(t)
-                                                + vd * f.diff(x).replace(DiracDelta, lambda x: 0)
-                                                + (c * u).diff(y)
-                                                + (c * u).diff(z))
+                                                + vd * f.diff(x).replace(DiracDelta, lambda x: 0))
+    # eps = 1e-3
+    # self.equations['buckley_equation_param'] = u.diff(t) + vd * f.diff(x) - eps * (u.diff(x)).diff(x)
 
 
 class BuckleyTrain(TrainDomain):
   def __init__(self, **config):
     super(BuckleyTrain, self).__init__()
     # sympy variables
-    x = Symbol('x')
 
     # initial conditions
     IC = geo.interior_bc(outvar_sympy={'u': 0, 'u__t': 0},
                          bounds={x: (0, L)},
-                         batch_size_per_area=5000,
+                         batch_size_per_area=1024,
                          lambda_sympy={'lambda_u': 1.0,
                                        'lambda_u__t': 1.0},
-                         param_ranges={t_symbol: 0.0, vel: vel_ranges})
+                         param_ranges={t_symbol: 0.0, **param_rng})
     self.add(IC, name="IC")
 
     # boundary conditions
     BC = geo.boundary_bc(outvar_sympy={'u': 1},
-                         batch_size_per_area=5000,
+                         batch_size_per_area=1024,
                          lambda_sympy={'lambda_u': 1.0},
-                         param_ranges=param_ranges,
+                         param_ranges={t_symbol: (0, tf), **param_rng},
                          criteria=x <= 0)
     self.add(BC, name="BC")
 
     # interior
     interior = geo.interior_bc(outvar_sympy={'buckley_equation_param': 0},
                                bounds={x: (0, L)},
-                               batch_size_per_area=5000,
+                               batch_size_per_area=5 * 1024,
                                lambda_sympy={'lambda_buckley_equation_param': 1.0},
-                               param_ranges=param_ranges)
+                               param_ranges={t_symbol: (0, tf), **param_rng})
     self.add(interior, name="Interior")
 
 
@@ -197,17 +199,24 @@ class BuckleyVal(ValidationDomain):
   def __init__(self, **config):
     super(BuckleyVal, self).__init__()
 
-    # u 1
-    val_v1 = Validation.from_numpy(invar_numpy_v1, outvar_v_1_numpy)
-    self.add(val_v1, name='Val_v1')
+    deltaT = 0.01
+    deltaX = 0.01 / 2.56
+    x = np.arange(0, L, deltaX)
+    t = np.arange(0, L, deltaT)
+    R = {}
+    X, T = np.meshgrid(x, t)
+    for i in range(1, n_modes + 1):
+      R["rand_v_" + str(i)] = np.expand_dims(np.tile(np.random.rand(x.shape[0]), (t.shape[0], 1)).flatten(), axis=-1)
+    X = np.expand_dims(X.flatten(), axis=-1)
+    T = np.expand_dims(T.flatten(), axis=-1)
 
-    # u .50
-    val_v50 = Validation.from_numpy(invar_numpy_v50, outvar_v_50_numpy)
-    self.add(val_v50, name='Val_v50')
+    w = sio.loadmat('./buckley/Buckley_Swc0_Sor_0_M_2.mat')
+    u = np.expand_dims(w['usol'].flatten(), axis=-1)
+    invar_numpy = {'x': X, 't': T, **R}
+    outvar_numpy = {'u': u}
+    val = Validation.from_numpy(invar_numpy, outvar_numpy)
+    self.add(val, name='Val')
 
-    # u 2
-    val_v2 = Validation.from_numpy(invar_numpy_v2, outvar_v_2_numpy)
-    self.add(val_v2, name='Val_v2')
 
 class BuckleyInference(InferenceDomain):
   def __init__(self, **config):
@@ -221,7 +230,7 @@ class BuckleyInference(InferenceDomain):
       sampled_interior = geo.sample_interior(1024 * 5,
                                              bounds={x: (0, L)},
                                              param_ranges={t_symbol: (0, tf),
-                                                           vel: velocity})
+                                                           **param_rng})
       interior = Inference(sampled_interior, ['u'])
       self.add(interior, name="Inference_" + str(i).zfill(5))
 
@@ -238,20 +247,20 @@ class BuckleySolver(Solver):
   def __init__(self, **config):
     super(BuckleySolver, self).__init__(**config)
 
-    self.equations = BuckleyEquationParam(u='u', c='ud', dim=1, time=True).make_node()
+    self.equations = BuckleyEquationParam(u='u', dim=1, time=True).make_node()
     buckley_net = self.arch.make_node(name='buckley_net',
-                                      inputs=['x', 't', 'ud'],
+                                      inputs=['x', 't', 'rand_v_1', 'rand_v_2', 'rand_v_3', 'rand_v_4', 'rand_v_5'],
                                       outputs=['u'])
     self.nets = [buckley_net]
 
   @classmethod  # Explain This
   def update_defaults(cls, defaults):
     defaults.update({
-      'network_dir': './checkpoint_het_sin/buckley_sin100_init_{}'.format(int(time.time())),
-      'max_steps': 90000,
+      'network_dir': './checkpoint_het_sin/buckley_het_fourier5f_wide_{}'.format(int(time.time())),
+      'max_steps': 30000,
       'decay_steps': 300,
       'start_lr': 5e-4,
-      'amp': True,
+      'amp': False,
       'xla': True
     })
     # defaults.update({
